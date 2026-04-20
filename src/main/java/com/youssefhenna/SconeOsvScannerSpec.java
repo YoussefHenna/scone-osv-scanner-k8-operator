@@ -7,6 +7,8 @@ public class SconeOsvScannerSpec {
     private String registryUrl;
     private String registryRepository;
     private RegistryCredentials registryCredentials;
+    private String dbManagerImageName;
+    private String frontAppImageName;
     private String casAddress;
     private ResourceRef casPolicy;
 
@@ -28,6 +30,22 @@ public class SconeOsvScannerSpec {
 
     public RegistryCredentials getRegistryCredentials() {
         return registryCredentials;
+    }
+
+    public String getDbManagerImageName() {
+        return dbManagerImageName;
+    }
+
+    public void setDbManagerImageName(String dbManagerImageName) {
+        this.dbManagerImageName = dbManagerImageName;
+    }
+
+    public String getFrontAppImageName() {
+        return frontAppImageName;
+    }
+
+    public void setFrontAppImageName(String frontAppImageName) {
+        this.frontAppImageName = frontAppImageName;
     }
 
     public void setRegistryCredentials(RegistryCredentials registryCredentials) {
