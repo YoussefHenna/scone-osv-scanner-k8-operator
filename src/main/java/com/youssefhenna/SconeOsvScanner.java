@@ -7,4 +7,5 @@ import io.fabric8.kubernetes.model.annotation.Version;
 
 @Version("v1")
 @Group("youssefhenna.com")
-public class SconeOsvScanner extends CustomResource<SconeOsvScannerSpec, SconeOsvScannerStatus> implements Namespaced { }
+public class SconeOsvScanner extends CustomResource<SconeOsvScannerSpec, SconeOsvScannerStatus> implements Namespaced {
+}
