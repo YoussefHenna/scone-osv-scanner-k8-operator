@@ -1,4 +1,10 @@
 # scone-osv-scanner-k8-operator
+A Kubernetes operator for running [scone-osv-scan](https://github.com/scontain-gmbh/scone-osv-scan) confidentially. 
+
+## WIP
+Work in progress, not yet ready for usage
+
+# Quarkus
 
 This project uses Quarkus, the Supersonic Subatomic Java Framework.
 
