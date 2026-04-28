@@ -62,6 +62,7 @@ public class SconeOsvScannerSpec {
 
     static class CommonDependantDeploymentSpec {
         private String imageName;
+        private String imageVersion;
         private int replicas;
         private String memory;
         private String sconeConfigId;
@@ -72,6 +73,14 @@ public class SconeOsvScannerSpec {
 
         public void setImageName(String imageName) {
             this.imageName = imageName;
+        }
+
+        public String getImageVersion() {
+            return imageVersion;
+        }
+
+        public void setImageVersion(String imageVersion) {
+            this.imageVersion = imageVersion;
         }
 
         public int getReplicas() {

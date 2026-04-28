@@ -1,0 +1,23 @@
+apiVersion: youssefhenna.com/v1
+kind: SconeOsvScanner
+metadata:
+  name: osv-scanner-sample
+spec:
+  registryUrl: registry.scontain.com
+  registryRepository: scone.cloud/sos-images
+  registryCredentials:
+    secretRef:
+      name: scontain-git-secret
+  casAddress: cas.default
+  dbManagerSpec:
+    imageName: dbmanager
+    imageVersion: 5.10.0-rc.5
+    replicas: 1
+    memory: 12G
+    sconeConfigId: scone-osv-scan/dbmanager_service
+  frontAppSpec:
+    imageName: osvscan
+    imageVersion: 5.10.0-rc.5
+    replicas: 1
+    memory: 5G
+    sconeConfigId: scone-osv-scan/osvscan_service

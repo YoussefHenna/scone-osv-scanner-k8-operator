@@ -29,7 +29,7 @@ public class FrontAppDeploymentDependentResource extends CRUDKubernetesDependent
         String name = Constants.getFrontAppDeploymentName(primary.getMetadata().getName());
         String namespace = primary.getMetadata().getNamespace();
 
-        String image = primarySpec.getRegistryRepository() + "/" + spec.getImageName() + ":latest";
+        String image = primarySpec.getRegistryUrl() + "/" + primarySpec.getRegistryRepository() + "/" + spec.getImageName() + ":" + spec.getImageVersion();
         String imagePullSecretName = primarySpec.getRegistryCredentials().getSecretRef().getName();
 
         String memory = spec.getMemory();

@@ -9,6 +9,8 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.javaoperatorsdk.operator.api.reconciler.*;
 import io.javaoperatorsdk.operator.api.reconciler.dependent.Dependent;
 
+import java.util.Set;
+
 
 @Workflow(
     dependents = {
@@ -23,8 +25,19 @@ public class SconeOsvScannerReconciler implements Reconciler<SconeOsvScanner> {
     public UpdateControl<SconeOsvScanner> reconcile(SconeOsvScanner resource, Context<SconeOsvScanner> context) {
         SconeOsvScannerStatus status = new SconeOsvScannerStatus();
 
-        Deployment dbManager = context.getSecondaryResource(Deployment.class, Constants.DB_MANAGER_DEPENDENT_NAME).orElse(null);
-        Deployment frontApp = context.getSecondaryResource(Deployment.class, Constants.FRONT_APP_DEPENDENT_NAME).orElse(null);
+        Set<Deployment> dependantDeployments = context.getSecondaryResources(Deployment.class);
+
+        String primaryName = resource.getMetadata().getName();
+        Deployment dbManager = null;
+        Deployment frontApp = null;
+        for (Deployment d : dependantDeployments) {
+            String name = d.getMetadata().getName();
+            if (name.equals(Constants.getDbManagerDeploymentName(primaryName))) {
+                dbManager = d;
+            } else if (name.equals(Constants.getFrontAppDeploymentName(primaryName))) {
+                frontApp = d;
+            }
+        }
 
         status.setDbManagerDeploymentStatus(resolveDeploymentStatus(dbManager));
         status.setFrontAppDeploymentStatus(resolveDeploymentStatus(frontApp));
