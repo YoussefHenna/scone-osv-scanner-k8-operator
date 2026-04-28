@@ -1,0 +1,10 @@
+name: osv-scanner-sample
+version: 0.3.10
+
+access_policy:
+  read:
+    - CREATOR
+  update:
+    - CREATOR
+  create_sessions:
+    - CREATOR
