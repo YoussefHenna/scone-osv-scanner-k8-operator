@@ -7,10 +7,10 @@ public class SconeOsvScannerSpec {
     private String registryUrl;
     private String registryRepository;
     private RegistryCredentials registryCredentials;
-    private String dbManagerImageName;
-    private String frontAppImageName;
     private String casAddress;
-    private ResourceRef casPolicy;
+    private DbManagerSpec dbManagerSpec;
+    private FrontAppSpec frontAppSpec;
+
 
     public String getRegistryUrl() {
         return registryUrl;
@@ -32,22 +32,6 @@ public class SconeOsvScannerSpec {
         return registryCredentials;
     }
 
-    public String getDbManagerImageName() {
-        return dbManagerImageName;
-    }
-
-    public void setDbManagerImageName(String dbManagerImageName) {
-        this.dbManagerImageName = dbManagerImageName;
-    }
-
-    public String getFrontAppImageName() {
-        return frontAppImageName;
-    }
-
-    public void setFrontAppImageName(String frontAppImageName) {
-        this.frontAppImageName = frontAppImageName;
-    }
-
     public void setRegistryCredentials(RegistryCredentials registryCredentials) {
         this.registryCredentials = registryCredentials;
     }
@@ -60,12 +44,63 @@ public class SconeOsvScannerSpec {
         this.casAddress = casAddress;
     }
 
-    public ResourceRef getCasPolicy() {
-        return casPolicy;
+    public DbManagerSpec getDbManagerSpec() {
+        return dbManagerSpec;
     }
 
-    public void setCasPolicy(ResourceRef casPolicy) {
-        this.casPolicy = casPolicy;
+    public void setDbManagerSpec(DbManagerSpec dbManagerSpec) {
+        this.dbManagerSpec = dbManagerSpec;
     }
+
+    public FrontAppSpec getFrontAppSpec() {
+        return frontAppSpec;
+    }
+
+    public void setFrontAppSpec(FrontAppSpec frontAppSpec) {
+        this.frontAppSpec = frontAppSpec;
+    }
+
+    static class CommonDependantDeploymentSpec {
+        private String imageName;
+        private int replicas;
+        private String memory;
+        private String sconeConfigId;
+
+        public String getImageName() {
+            return imageName;
+        }
+
+        public void setImageName(String imageName) {
+            this.imageName = imageName;
+        }
+
+        public int getReplicas() {
+            return replicas;
+        }
+
+        public void setReplicas(int replicas) {
+            this.replicas = replicas;
+        }
+
+        public String getMemory() {
+            return memory;
+        }
+
+        public void setMemory(String memory) {
+            this.memory = memory;
+        }
+
+        public String getSconeConfigId() {
+            return sconeConfigId;
+        }
+
+        public void setSconeConfigId(String sconeConfigId) {
+            this.sconeConfigId = sconeConfigId;
+        }
+    }
+
+    public static class DbManagerSpec extends CommonDependantDeploymentSpec { }
+
+    public static class FrontAppSpec extends CommonDependantDeploymentSpec { }
 
 }

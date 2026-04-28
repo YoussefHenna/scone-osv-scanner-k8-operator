@@ -23,16 +23,17 @@ public class FrontAppDeploymentDependentResource extends CRUDKubernetesDependent
 
     @Override
     protected Deployment desired(SconeOsvScanner primary, Context<SconeOsvScanner> context) {
-        SconeOsvScannerSpec spec = primary.getSpec();
+        SconeOsvScannerSpec primarySpec = primary.getSpec();
+        SconeOsvScannerSpec.FrontAppSpec spec = primarySpec.getFrontAppSpec();
 
         String name = Constants.getFrontAppDeploymentName(primary.getMetadata().getName());
         String namespace = primary.getMetadata().getNamespace();
 
-        String image = spec.getRegistryRepository() + "/" + spec.getFrontAppImageName() + ":latest";
-        String imagePullSecretName = spec.getRegistryCredentials().getSecretRef().getName();
+        String image = primarySpec.getRegistryRepository() + "/" + spec.getImageName() + ":latest";
+        String imagePullSecretName = primarySpec.getRegistryCredentials().getSecretRef().getName();
 
-        String memory = "5G";
-        List<EnvVar> envVars = DeploymentCommon.buildSconeEnvVars(memory, spec.getCasAddress(), "scone-osv-scan/osvscan_service", "1");
+        String memory = spec.getMemory();
+        List<EnvVar> envVars = DeploymentCommon.buildSconeEnvVars(memory, primarySpec.getCasAddress(), spec.getSconeConfigId(), "1");
         ResourceRequirements resources = DeploymentCommon.buildSgxResources(memory);
 
         Probe livenessProbe = new ProbeBuilder()
@@ -70,7 +71,7 @@ public class FrontAppDeploymentDependentResource extends CRUDKubernetesDependent
             .withReadinessProbe(readinessProbe)
             .build();
 
-        return DeploymentCommon.buildDeployment(name, namespace, imagePullSecretName, container);
+        return DeploymentCommon.buildDeployment(name, namespace, imagePullSecretName, container, spec.getReplicas());
     }
 
 

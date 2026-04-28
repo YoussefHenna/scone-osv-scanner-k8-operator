@@ -39,7 +39,7 @@ public class DeploymentCommon {
             .build();
     }
 
-    public static Deployment buildDeployment(String name, String namespace, String imagePullSecretName, Container container) {
+    public static Deployment buildDeployment(String name, String namespace, String imagePullSecretName, Container container, int replicas) {
         LocalObjectReference imagePullSecret = new LocalObjectReferenceBuilder()
             .withName(imagePullSecretName)
             .build();
@@ -65,7 +65,7 @@ public class DeploymentCommon {
             .build();
 
         DeploymentSpec deploymentSpec = new DeploymentSpecBuilder()
-            .withReplicas(1)
+            .withReplicas(replicas)
             .withSelector(selector)
             .withTemplate(podTemplate)
             .build();

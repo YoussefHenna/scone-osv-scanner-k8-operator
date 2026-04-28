@@ -26,16 +26,17 @@ public class DbManagerDeploymentDependentResource extends CRUDKubernetesDependen
 
     @Override
     protected Deployment desired(SconeOsvScanner primary, Context<SconeOsvScanner> context) {
-        SconeOsvScannerSpec spec = primary.getSpec();
+        SconeOsvScannerSpec primarySpec = primary.getSpec();
+        SconeOsvScannerSpec.DbManagerSpec spec = primarySpec.getDbManagerSpec();
 
         String name = Constants.getDbManagerDeploymentName(primary.getMetadata().getName());
         String namespace = primary.getMetadata().getNamespace();
 
-        String image = spec.getRegistryRepository() + "/" + spec.getDbManagerImageName() + ":latest";
-        String imagePullSecretName = spec.getRegistryCredentials().getSecretRef().getName();
+        String image = primarySpec.getRegistryRepository() + "/" + spec.getImageName() + ":latest";
+        String imagePullSecretName = primarySpec.getRegistryCredentials().getSecretRef().getName();
 
-        String memory = "12G";
-        List<EnvVar> envVars = DeploymentCommon.buildSconeEnvVars(memory, spec.getCasAddress(), "scone-osv-scan/dbmanager_service", null);
+        String memory = spec.getMemory();
+        List<EnvVar> envVars = DeploymentCommon.buildSconeEnvVars(memory, primarySpec.getCasAddress(), spec.getSconeConfigId(), null);
         ResourceRequirements resources = DeploymentCommon.buildSgxResources(memory);
 
         Container container = new ContainerBuilder()
@@ -46,7 +47,7 @@ public class DbManagerDeploymentDependentResource extends CRUDKubernetesDependen
             .withResources(resources)
             .build();
 
-        return DeploymentCommon.buildDeployment(name, namespace, imagePullSecretName, container);
+        return DeploymentCommon.buildDeployment(name, namespace, imagePullSecretName, container, spec.getReplicas());
     }
 
 }
