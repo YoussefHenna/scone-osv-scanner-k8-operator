@@ -2,8 +2,8 @@ package com.youssefhenna.dependent;
 
 import com.youssefhenna.SconeOsvScanner;
 import com.youssefhenna.SconeOsvScannerSpec;
+import com.youssefhenna.utils.Common;
 import com.youssefhenna.utils.Constants;
-import com.youssefhenna.utils.DeploymentCommon;
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
 import io.fabric8.kubernetes.api.model.EnvVar;
@@ -36,8 +36,8 @@ public class DbManagerDeploymentDependentResource extends CRUDKubernetesDependen
         String imagePullSecretName = primarySpec.getRegistryCredentials().getSecretRef().getName();
 
         String memory = spec.getMemory();
-        List<EnvVar> envVars = DeploymentCommon.buildSconeEnvVars(memory, primarySpec.getCasAddress(), spec.getSconeConfigId(), null);
-        ResourceRequirements resources = DeploymentCommon.buildSgxResources(memory);
+        List<EnvVar> envVars = Common.buildSconeEnvVars(memory, primarySpec.getCasAddress(), spec.getSconeConfigId(), null);
+        ResourceRequirements resources = Common.buildSgxResources(memory);
 
         Container container = new ContainerBuilder()
             .withName(name + "-container")
@@ -47,7 +47,7 @@ public class DbManagerDeploymentDependentResource extends CRUDKubernetesDependen
             .withResources(resources)
             .build();
 
-        return DeploymentCommon.buildDeployment(name, namespace, imagePullSecretName, container, spec.getReplicas());
+        return Common.buildDeployment(name, namespace, imagePullSecretName, container, spec.getReplicas());
     }
 
 }

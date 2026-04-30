@@ -7,12 +7,13 @@ import io.fabric8.kubernetes.api.model.apps.DeploymentSpec;
 import io.fabric8.kubernetes.api.model.apps.DeploymentSpecBuilder;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class DeploymentCommon {
+public class Common {
 
-    public static List<EnvVar> buildSconeEnvVars(String heap, String casAddress, String configId, String version) {
+    public static List<EnvVar> buildSconeEnvVars(String heap, String casAddress, String configId, String version, EnvVar... extras) {
         List<EnvVar> envVars = new ArrayList<>();
         if (version != null) {
             envVars.add(new EnvVarBuilder().withName("SCONE_VERSION").withValue(version).build());
@@ -26,7 +27,12 @@ public class DeploymentCommon {
                 .withNewFieldRef().withFieldPath("status.hostIP").endFieldRef()
                 .build())
             .build());
+        Collections.addAll(envVars, extras);
         return envVars;
+    }
+
+    public static String buildImage(String registryUrl, String registryRepository, String imageName, String imageVersion) {
+        return registryUrl + "/" + registryRepository + "/" + imageName + ":" + imageVersion;
     }
 
     public static ResourceRequirements buildSgxResources(String memory) {

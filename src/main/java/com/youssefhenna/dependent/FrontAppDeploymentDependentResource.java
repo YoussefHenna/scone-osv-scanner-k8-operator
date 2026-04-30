@@ -2,8 +2,8 @@ package com.youssefhenna.dependent;
 
 import com.youssefhenna.SconeOsvScanner;
 import com.youssefhenna.SconeOsvScannerSpec;
+import com.youssefhenna.utils.Common;
 import com.youssefhenna.utils.Constants;
-import com.youssefhenna.utils.DeploymentCommon;
 import io.fabric8.kubernetes.api.model.*;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.javaoperatorsdk.operator.api.config.informer.Informer;
@@ -33,8 +33,8 @@ public class FrontAppDeploymentDependentResource extends CRUDKubernetesDependent
         String imagePullSecretName = primarySpec.getRegistryCredentials().getSecretRef().getName();
 
         String memory = spec.getMemory();
-        List<EnvVar> envVars = DeploymentCommon.buildSconeEnvVars(memory, primarySpec.getCasAddress(), spec.getSconeConfigId(), "1");
-        ResourceRequirements resources = DeploymentCommon.buildSgxResources(memory);
+        List<EnvVar> envVars = Common.buildSconeEnvVars(memory, primarySpec.getCasAddress(), spec.getSconeConfigId(), "1");
+        ResourceRequirements resources = Common.buildSgxResources(memory);
 
         Probe livenessProbe = new ProbeBuilder()
             .withHttpGet(new HTTPGetActionBuilder()
@@ -71,7 +71,7 @@ public class FrontAppDeploymentDependentResource extends CRUDKubernetesDependent
             .withReadinessProbe(readinessProbe)
             .build();
 
-        return DeploymentCommon.buildDeployment(name, namespace, imagePullSecretName, container, spec.getReplicas());
+        return Common.buildDeployment(name, namespace, imagePullSecretName, container, spec.getReplicas());
     }
 
 

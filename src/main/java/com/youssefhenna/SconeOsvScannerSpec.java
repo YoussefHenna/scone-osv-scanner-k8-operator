@@ -1,7 +1,6 @@
 package com.youssefhenna;
 
 import com.youssefhenna.model.RegistryCredentials;
-import com.youssefhenna.model.ResourceRef;
 
 public class SconeOsvScannerSpec {
     private String registryUrl;
@@ -10,6 +9,7 @@ public class SconeOsvScannerSpec {
     private String casAddress;
     private DbManagerSpec dbManagerSpec;
     private FrontAppSpec frontAppSpec;
+    private DatabaseSpec databaseSpec;
 
 
     public String getRegistryUrl() {
@@ -60,6 +60,14 @@ public class SconeOsvScannerSpec {
         this.frontAppSpec = frontAppSpec;
     }
 
+    public DatabaseSpec getDatabaseSpec() {
+        return databaseSpec;
+    }
+
+    public void setDatabaseSpec(DatabaseSpec databaseSpec) {
+        this.databaseSpec = databaseSpec;
+    }
+
     static class CommonDependantDeploymentSpec {
         private String imageName;
         private String imageVersion;
@@ -108,8 +116,73 @@ public class SconeOsvScannerSpec {
         }
     }
 
-    public static class DbManagerSpec extends CommonDependantDeploymentSpec { }
+    public static class DbManagerSpec extends CommonDependantDeploymentSpec {
+    }
 
-    public static class FrontAppSpec extends CommonDependantDeploymentSpec { }
+    public static class FrontAppSpec extends CommonDependantDeploymentSpec {
+    }
+
+    public static class DatabaseSpec {
+        private String registryRepository;
+        private MaxscaleSpec maxscale;
+        private MariadbSpec mariadbPrimary;
+        private MariadbSpec mariadbReplica;
+
+        public String getRegistryRepository() {
+            return registryRepository;
+        }
+
+        public void setRegistryRepository(String registryRepository) {
+            this.registryRepository = registryRepository;
+        }
+
+        public MaxscaleSpec getMaxscale() {
+            return maxscale;
+        }
+
+        public void setMaxscale(MaxscaleSpec maxscale) {
+            this.maxscale = maxscale;
+        }
+
+        public MariadbSpec getMariadbPrimary() {
+            return mariadbPrimary;
+        }
+
+        public void setMariadbPrimary(MariadbSpec mariadbPrimary) {
+            this.mariadbPrimary = mariadbPrimary;
+        }
+
+        public MariadbSpec getMariadbReplica() {
+            return mariadbReplica;
+        }
+
+        public void setMariadbReplica(MariadbSpec mariadbReplica) {
+            this.mariadbReplica = mariadbReplica;
+        }
+    }
+
+    public static class MaxscaleSpec extends CommonDependantDeploymentSpec {
+    }
+
+    public static class MariadbSpec extends CommonDependantDeploymentSpec {
+        private String storageSize;
+        private String storageClassName;
+
+        public String getStorageSize() {
+            return storageSize;
+        }
+
+        public void setStorageSize(String storageSize) {
+            this.storageSize = storageSize;
+        }
+
+        public String getStorageClassName() {
+            return storageClassName;
+        }
+
+        public void setStorageClassName(String storageClassName) {
+            this.storageClassName = storageClassName;
+        }
+    }
 
 }
