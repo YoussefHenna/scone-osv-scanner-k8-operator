@@ -21,3 +21,29 @@ spec:
     replicas: 1
     memory: 5G
     sconeConfigId: scone-osv-scan/osvscan_service
+  databaseSpec:
+    registryUrl: registry.scontain.com
+    registryRepository: sconecuratedimages
+    registryCredentials:
+      secretRef:
+        name: scontain-git-secret
+    maxscaleSpec:
+      imageName: apps
+      imageVersion: maxscale-2.5-alpine-scone5
+      replicas: 1
+      memory: 2G
+      sconeConfigId: scone-osv-scan/maxscale
+    mariadbPrimarySpec:
+      imageName: apps
+      imageVersion: mariadb-alpine-scone5.0
+      replicas: 1
+      memory: 4G
+      sconeConfigId: scone-osv-scan/mariadb_primary
+      storageSize: 10Gi
+    mariadbReplicaSpec:
+      imageName: apps
+      imageVersion: mariadb-alpine-scone5.0
+      replicas: 1
+      memory: 4G
+      sconeConfigId: scone-osv-scan/mariadb_replica
+      storageSize: 10Gi
