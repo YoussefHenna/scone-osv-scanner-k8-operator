@@ -1,0 +1,163 @@
+## This policy manages MariaDB certificates, in a way that
+## allows multiple instances to have the same set of certificates.
+name: osv-scanner-sample/mariadb-certificates
+version: "0.3.10"
+
+access_policy:
+  read:
+   - CREATOR
+  update:
+   - CREATOR
+
+
+## Create certificates for MariaDB's CA, server and client.
+## Each certificate is then exported to the appropriate sessions that can
+## consume them.
+secrets:
+  - name: MYSQL_ROOT_PASSWORD
+    kind: binary
+    size: 20
+    export:
+      - session: osv-scanner-sample/mariadb-primary
+      - session: osv-scanner-sample/mariadb-replica
+      - session: osv-scanner-sample/mariadb-backup
+      - session: osv-scanner-sample/mariadb-dba-policy
+      - session: osv-scanner-sample/mariadb-maxscale
+      ## If there is another security policy that should have access
+      ## to the mariadb root password, add it to this list.
+      # - session: some-other-session
+
+
+
+
+  - name: REPLICATION_USER_PASSWORD
+    kind: binary
+    size: 20
+    export:
+      - session: osv-scanner-sample/mariadb-primary
+      - session: osv-scanner-sample/mariadb-replica
+      - session: osv-scanner-sample/mariadb-maxscale
+
+  - name: MAXSCALE_SCONE_INJECTED_ADMIN_PASSWORD
+    kind: binary
+    size: 20
+    export:
+      - session: osv-scanner-sample/mariadb-maxscale
+
+  ## Randomly generate a private key for MariaDB's CA.
+  - name: MARIADB_CA_KEY
+    kind: private-key
+    migrate: true
+    export:
+      - session: osv-scanner-sample/mariadb-primary
+      - session: osv-scanner-sample/mariadb-replica
+
+  ## Randomly generate a CA for MariaDB.
+  - name: MARIADB_CA_CERT
+    kind: x509-ca
+    common_name: MariaDB_CA
+    private_key: MARIADB_CA_KEY
+    export:
+      - session: osv-scanner-sample/mariadb-maxscale
+      - session: osv-scanner-sample/mariadb-primary
+      - session: osv-scanner-sample/mariadb-replica
+      - session: osv-scanner-sample/mariadb-backup
+      - session: osv-scanner-sample/mariadb-dba-policy
+
+
+  - name: maxscale-frontend-key
+    kind: private-key
+    migrate: true
+    export:
+      - session: osv-scanner-sample/mariadb-maxscale
+
+  - name: maxscale-frontend-cert
+    kind: x509
+    private_key: maxscale-frontend-key
+    issuer: MARIADB_CA_CERT
+    common_name: maxscale
+    dns:
+      - maxscale
+      - mariadb
+    export:
+      - session: osv-scanner-sample/mariadb-maxscale
+
+  - name: maxscale-internal-key
+    kind: private-key
+    migrate: true
+    export:
+      - session: osv-scanner-sample/mariadb-maxscale
+
+  - name: maxscale-internal-cert
+    kind: x509
+    private_key: maxscale-internal-key
+    issuer: MARIADB_CA_CERT
+    common_name: maxscale
+    dns:
+      - maxscale-internal
+    export:
+      - session: osv-scanner-sample/mariadb-maxscale
+
+  ## Randomly generate a private key for MariaDB's server certificate.
+  - name: mariadb-key
+    kind: private-key
+    migrate: true
+    export:
+      - session: osv-scanner-sample/mariadb-primary
+      - session: osv-scanner-sample/mariadb-replica
+
+  ## Randomly generate the server certificates for MariaDB.
+  ## Note that this certificate is issued by MariaDB's CA.
+  - name: mariadb
+    private_key: mariadb-key
+    issuer: MARIADB_CA_CERT
+    kind: x509
+    common_name: mysqld
+    dns:
+      - mysqld
+      - mariadb-primary # we use primary.service.nameOverride, introduced in mariadb-spr v0.2
+      - mariadb-replica # we use replica.service.nameOverride, introduced in mariadb-spr v0.2
+      - localhost # for metrics exporter
+    export:
+      - session: osv-scanner-sample/mariadb-primary
+      - session: osv-scanner-sample/mariadb-replica
+
+  - name: backup-key
+    kind: private-key
+    migrate: true
+    export:
+      - session: osv-scanner-sample/mariadb-backup
+
+  - name: backup-cert
+    private_key: backup-key
+    issuer: MARIADB_CA_CERT
+    kind: x509
+    common_name: mariadb-backup
+    dns:
+      - mariadb-backup
+    export:
+      - session: osv-scanner-sample/mariadb-backup
+
+   ## Randomly generate a private key for MariaDB's bootstrap setup (client side).
+  - name: setupClientKey
+    kind: private-key
+    migrate: true
+    export:
+      - session: osv-scanner-sample/mariadb-primary
+      - session: osv-scanner-sample/mariadb-replica
+      - session: osv-scanner-sample/mariadb-dba-policy
+
+  ## Randomly generate the client certificate for MariaDB's bootstrap setup (client side).
+  ## Note that this certificate is issued by MariaDB's CA.
+  - name: setupClientCert
+    private_key: setupClientKey
+    issuer: MARIADB_CA_CERT
+    common_name: setup-client
+    dns:
+      - setup-client
+    kind: x509
+    export:
+      - session: osv-scanner-sample/mariadb-primary
+      - session: osv-scanner-sample/mariadb-replica
+      - session: osv-scanner-sample/mariadb-dba-policy
+

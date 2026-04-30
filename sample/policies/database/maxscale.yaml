@@ -1,0 +1,186 @@
+name: osv-scanner-sample/mariadb-maxscale
+version: "0.3.10"
+
+
+access_policy:
+  read:
+    - CREATOR
+  update:
+    - CREATOR
+
+
+security:
+  attestation:
+    # WARNING, NOT SAFE FOR PRODUCTION
+    tolerate: [debug-mode, hyperthreading, outdated-tcb, insecure-configuration, software-hardening-needed]
+    ignore_advisories: "*"
+
+
+services:
+  - name: maxscale
+    image_name: maxscale-image
+    command:
+      - maxscale
+      - -d # no fork!
+      - -f
+      - /etc/maxscale.cnf
+      - -l
+      - stdout
+    mrenclaves: [$MRENCLAVE_MAXSCALE]
+    pwd: /
+    environment:
+      SCONE_LOG: debug
+      SCONE_SYNC_FSPF_TAG_WITH_CAS: 0
+      SCONE_NETWORK_SHIELD: protected
+      SCONE_NETWORK_SHIELD_UNSUPPORTED_PROTOCOLS: unprotected # allow dns
+      SCONE_NETWORK_SHIELD_SERVER_ADM: protected
+      SCONE_NETWORK_SHIELD_SERVER_ADM_PORT: "TCP:8989"
+      SCONE_NETWORK_SHIELD_SERVER_ADM_IDENTITY: $$SCONE::maxscale-internal-cert$$$$SCONE::maxscale-internal-cert:privatekey$$
+      SCONE_NETWORK_SHIELD_SERVER_ADM_CLIENT_AUTH: $$SCONE::MARIADB_CA_CERT$$
+
+      SCONE_NETWORK_SHIELD_SERVER_TCP: protected
+      SCONE_NETWORK_SHIELD_SERVER_TCP_PORT: TCP:3306
+      SCONE_NETWORK_SHIELD_SERVER_TCP_IDENTITY: $$SCONE::maxscale-frontend-cert$$$$SCONE::maxscale-frontend-cert:privatekey$$
+      SCONE_NETWORK_SHIELD_SERVER_TCP_CLIENT_AUTH: $$SCONE::MARIADB_CA_CERT$$
+
+      SCONE_NETWORK_SHIELD_CLIENT_PRIMARY: protected
+      SCONE_NETWORK_SHIELD_CLIENT_PRIMARY_DESTINATION: "TCP:mariadb-primary:3306"
+      SCONE_NETWORK_SHIELD_CLIENT_PRIMARY_DESTINATION_IP: "*"
+      SCONE_NETWORK_SHIELD_CLIENT_PRIMARY_IDENTITY: $$SCONE::maxscale-internal-cert$$$$SCONE::maxscale-internal-cert:privatekey$$
+      SCONE_NETWORK_SHIELD_CLIENT_PRIMARY_SERVER_AUTH: $$SCONE::MARIADB_CA_CERT$$
+      SCONE_NETWORK_SHIELD_CLIENT_REPLICA: protected
+      SCONE_NETWORK_SHIELD_CLIENT_REPLICA_DESTINATION: "TCP:mariadb-replica:3307"
+      SCONE_NETWORK_SHIELD_CLIENT_REPLICA_DESTINATION_IP: "*"
+      SCONE_NETWORK_SHIELD_CLIENT_REPLICA_IDENTITY: $$SCONE::maxscale-internal-cert$$$$SCONE::maxscale-internal-cert:privatekey$$
+      SCONE_NETWORK_SHIELD_CLIENT_REPLICA_SERVER_AUTH: $$SCONE::MARIADB_CA_CERT$$
+
+
+
+images:
+  - name: maxscale-image
+    injection_files:
+      - path: /protected_do_not_change_encrypted_dir/passwd
+        content: |
+          \admin:$$SCONE::MAXSCALE_SCONE_INJECTED_ADMIN_PASSWORD:hex$$
+      - path: /etc/maxscale.cnf
+        content: |
+          [maxscale]
+          threads=auto
+          log_debug=true
+          # enforce admin host and auth config.
+          admin_host=0.0.0.0
+          admin_auth=true
+
+          # load only from binary-fs
+          libdir=/usr/lib/x86_64-linux-gnu/maxscale
+
+          # Fixed dir to be configured in the security policy
+          # and encrypted used with FSPF. These directories
+          # hold temp info that may leak confidential data.
+          # Because they are checked by maxscale, we have to
+          # keep out of the binary-fs.
+          logdir=/protected_do_not_change_encrypted_dir
+          datadir=/protected_do_not_change_encrypted_dir
+          cachedir=/protected_do_not_change_encrypted_dir
+          piddir=/protected_do_not_change_encrypted_dir
+          execdir=/protected_do_not_change_encrypted_dir
+          connector_plugindir=/protected_do_not_change_encrypted_dir
+          persistdir=/protected_do_not_change_encrypted_dir
+          module_configdir=/protected_do_not_change_encrypted_dir
+          sharedir=/protected_do_not_change_encrypted_dir
+          language=/protected_do_not_change_encrypted_dir
+
+          [mdb1]
+          type=server
+          address=mariadb-primary
+          port=3306
+          protocol=MariaDBBackend
+
+          [mdb2]
+          type=server
+          address=mariadb-replica
+          port=3307
+          protocol=MariaDBBackend
+
+          [mariadbmon]
+          type=monitor
+          module=mariadbmon
+          servers=mdb1,mdb2
+          user=root
+          password=$$SCONE::MYSQL_ROOT_PASSWORD:hex$$
+          monitor_interval=2s
+          auto_failover=true
+          auto_rejoin=true
+          enforce_simple_topology=true
+          enforce_read_only_slaves=true
+          replication_user=replica
+          replication_password=$$SCONE::REPLICATION_USER_PASSWORD:hex$$
+          master_failure_timeout=4s
+          failcount=3
+
+          [rwsplit]
+          type=service
+          enable_root_user=true
+          router=readwritesplit
+          servers=mdb1,mdb2
+          user=root
+          password=$$SCONE::MYSQL_ROOT_PASSWORD:hex$$
+          transaction_replay=true
+          #transaction_replay_timeout=30s
+          causal_reads=global
+
+          [Splitter-Listener]
+          type=listener
+          service=rwsplit
+          protocol=MariaDBClient
+          port=3306
+
+    volumes:
+       - name: protected_do_not_change_encrypted_volume
+         path: /protected_do_not_change_encrypted_dir
+         update_policy: no_rollback_protection
+
+volumes:
+  - name: protected_do_not_change_encrypted_volume
+
+# Import the appropriate secrets from mariadb-certificates policy.
+secrets:
+  - name: MYSQL_ROOT_PASSWORD
+    import:
+      session: osv-scanner-sample/mariadb-certificates
+      secret: MYSQL_ROOT_PASSWORD
+
+  - name: REPLICATION_USER_PASSWORD
+    import:
+      session: osv-scanner-sample/mariadb-certificates
+      secret: REPLICATION_USER_PASSWORD
+
+  - name: MAXSCALE_SCONE_INJECTED_ADMIN_PASSWORD
+    import:
+      session: osv-scanner-sample/mariadb-certificates
+      secret: MAXSCALE_SCONE_INJECTED_ADMIN_PASSWORD
+
+  - name: maxscale-frontend-key
+    import:
+      session: osv-scanner-sample/mariadb-certificates
+      secret: maxscale-frontend-key
+
+  - name: maxscale-frontend-cert
+    import:
+      session: osv-scanner-sample/mariadb-certificates
+      secret: maxscale-frontend-cert
+
+  - name: maxscale-internal-key
+    import:
+      session: osv-scanner-sample/mariadb-certificates
+      secret: maxscale-internal-key
+
+  - name: maxscale-internal-cert
+    import:
+      session: osv-scanner-sample/mariadb-certificates
+      secret: maxscale-internal-cert
+
+  - name: MARIADB_CA_CERT
+    import:
+     session: osv-scanner-sample/mariadb-certificates
+     secret: MARIADB_CA_CERT

@@ -8,19 +8,19 @@ spec:
   registryCredentials:
     secretRef:
       name: scontain-git-secret
-  casAddress: cas.default
+  casAddress: scone-cas.cf
   dbManagerSpec:
     imageName: dbmanager
     imageVersion: 5.10.0-rc.5
     replicas: 1
     memory: 12G
-    sconeConfigId: scone-osv-scan/dbmanager_service
+    sconeConfigId: osv-scanner-sample/scone-osv-scan/dbmanager
   frontAppSpec:
     imageName: osvscan
     imageVersion: 5.10.0-rc.5
     replicas: 1
     memory: 5G
-    sconeConfigId: scone-osv-scan/osvscan_service
+    sconeConfigId: osv-scanner-sample/scone-osv-scan/osvscan
   databaseSpec:
     registryUrl: registry.scontain.com
     registryRepository: sconecuratedimages
@@ -32,18 +32,18 @@ spec:
       imageVersion: maxscale-2.5-alpine-scone5
       replicas: 1
       memory: 2G
-      sconeConfigId: scone-osv-scan/maxscale
+      sconeConfigId: osv-scanner-sample/mariadb-maxscale/maxscale
     mariadbPrimarySpec:
       imageName: apps
       imageVersion: mariadb-alpine-scone5.0
       replicas: 1
       memory: 4G
-      sconeConfigId: scone-osv-scan/mariadb_primary
+      sconeConfigId: osv-scanner-sample/mariadb-primary # base config, not a single service
       storageSize: 10Gi
     mariadbReplicaSpec:
       imageName: apps
       imageVersion: mariadb-alpine-scone5.0
       replicas: 1
       memory: 4G
-      sconeConfigId: scone-osv-scan/mariadb_replica
+      sconeConfigId: osv-scanner-sample/mariadb-replica # base config, not a single service
       storageSize: 10Gi
