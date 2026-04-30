@@ -1,10 +1,21 @@
 package com.youssefhenna.spec;
 
+import io.fabric8.generator.annotation.Required;
+
 public class CommonDependantSpec {
+
+    @Required
     private String imageName;
+
+    @Required
     private String imageVersion;
-    private int replicas;
+
+    private int replicas = 1;
+
+    @Required
     private String memory;
+
+    @Required
     private String sconeConfigId;
 
     public String getImageName() {

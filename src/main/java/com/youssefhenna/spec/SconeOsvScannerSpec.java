@@ -1,14 +1,27 @@
 package com.youssefhenna.spec;
 
 import com.youssefhenna.model.RegistryCredentials;
+import io.fabric8.generator.annotation.Required;
 
 public class SconeOsvScannerSpec {
+    @Required
     private String registryUrl;
+
+    @Required
     private String registryRepository;
+
     private RegistryCredentials registryCredentials;
+
+    @Required
     private String casAddress;
+
+    @Required
     private DbManagerSpec dbManagerSpec;
+
+    @Required
     private FrontAppSpec frontAppSpec;
+
+    @Required
     private DatabaseSpec databaseSpec;
 
 

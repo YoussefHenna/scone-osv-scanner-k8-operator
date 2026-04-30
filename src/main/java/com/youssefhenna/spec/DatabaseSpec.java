@@ -1,13 +1,24 @@
 package com.youssefhenna.spec;
 
 import com.youssefhenna.model.RegistryCredentials;
+import io.fabric8.generator.annotation.Required;
 
 public class DatabaseSpec {
+    @Required
     private String registryUrl;
+
+    @Required
     private String registryRepository;
+
     private RegistryCredentials registryCredentials;
+
+    @Required
     private MaxscaleSpec maxscaleSpec;
+
+    @Required
     private MariadbSpec mariadbPrimarySpec;
+
+    @Required
     private MariadbSpec mariadbReplicaSpec;
 
     public String getRegistryUrl() {
