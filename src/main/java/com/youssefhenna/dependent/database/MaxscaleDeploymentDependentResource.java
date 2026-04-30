@@ -1,7 +1,9 @@
 package com.youssefhenna.dependent.database;
 
 import com.youssefhenna.SconeOsvScanner;
-import com.youssefhenna.SconeOsvScannerSpec;
+import com.youssefhenna.spec.DatabaseSpec;
+import com.youssefhenna.spec.MaxscaleSpec;
+import com.youssefhenna.spec.SconeOsvScannerSpec;
 import com.youssefhenna.utils.Common;
 import com.youssefhenna.utils.Constants;
 import io.fabric8.kubernetes.api.model.*;
@@ -25,23 +27,17 @@ public class MaxscaleDeploymentDependentResource extends CRUDKubernetesDependent
     @Override
     protected Deployment desired(SconeOsvScanner primary, Context<SconeOsvScanner> context) {
         SconeOsvScannerSpec primarySpec = primary.getSpec();
-        SconeOsvScannerSpec.DatabaseSpec dbSpec = primarySpec.getDatabaseSpec();
-        SconeOsvScannerSpec.MaxscaleSpec spec = dbSpec.getMaxscale();
+        DatabaseSpec dbSpec = primarySpec.getDatabaseSpec();
+        MaxscaleSpec spec = dbSpec.getMaxscaleSpec();
 
         String name = Constants.getMaxscaleDeploymentName(primary.getMetadata().getName());
         String namespace = primary.getMetadata().getNamespace();
 
-        String registryRepository = dbSpec.getRegistryRepository() != null
-            ? dbSpec.getRegistryRepository()
-            : primarySpec.getRegistryRepository();
-        String image = Common.buildImage(primarySpec.getRegistryUrl(), registryRepository, spec.getImageName(), spec.getImageVersion());
-        String imagePullSecretName = primarySpec.getRegistryCredentials().getSecretRef().getName();
+        String image = Common.buildImage(dbSpec.getRegistryUrl(), dbSpec.getRegistryRepository(), spec.getImageName(), spec.getImageVersion());
+        String imagePullSecretName = dbSpec.getRegistryCredentials().getSecretRef().getName();
 
         String memory = spec.getMemory();
-        List<EnvVar> envVars = new ArrayList<>(Common.buildSconeEnvVars(memory, primarySpec.getCasAddress(), spec.getSconeConfigId(), "1"));
-        envVars.add(new EnvVarBuilder().withName("SCONE_ALLOW_DLOPEN").withValue("1").build());
-        envVars.add(new EnvVarBuilder().withName("SCONE_MODE").withValue("hw").build());
-        envVars.add(new EnvVarBuilder().withName("SCONE_LOG").withValue("error").build());
+        List<EnvVar> envVars = new ArrayList<>(Common.buildSconeEnvVars(memory, primarySpec.getCasAddress(), spec.getSconeConfigId()));
         ResourceRequirements resources = Common.buildSgxResources(memory);
 
         Container container = new ContainerBuilder()
@@ -52,8 +48,8 @@ public class MaxscaleDeploymentDependentResource extends CRUDKubernetesDependent
             .withEnv(envVars)
             .withResources(resources)
             .withPorts(
-                new ContainerPortBuilder().withName("maxscale").withContainerPort(Constants.MAXSCALE_PORT).withProtocol("TCP").build(),
-                new ContainerPortBuilder().withName("admin").withContainerPort(Constants.MAXSCALE_ADMIN_PORT).withProtocol("TCP").build()
+                new ContainerPortBuilder().withName(Constants.MAXSCALE_PORT_NAME).withContainerPort(Constants.MAXSCALE_PORT).withProtocol("TCP").build(),
+                new ContainerPortBuilder().withName(Constants.MAXSCALE_ADMIN_PORT_NAME).withContainerPort(Constants.MAXSCALE_ADMIN_PORT).withProtocol("TCP").build()
             )
             .build();
 

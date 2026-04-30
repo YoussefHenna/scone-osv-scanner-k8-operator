@@ -27,6 +27,10 @@ public class Constants {
     public static final int MAXSCALE_ADMIN_PORT = 8989;
     public static final int MARIADB_PRIMARY_PORT = 3306;
     public static final int MARIADB_REPLICA_PORT = 3307;
+    public static final String MARIADB_PRIMARY_PORT_NAME = "mariadb";
+    public static final String MARIADB_REPLICA_PORT_NAME = "mariadb";
+    public static final String MAXSCALE_PORT_NAME = "maxscale";
+    public static final String MAXSCALE_ADMIN_PORT_NAME = "admin";
 
     public static final String MARIADB_PRIMARY_COMPONENT = "primary";
     public static final String MARIADB_REPLICA_COMPONENT = "replica";

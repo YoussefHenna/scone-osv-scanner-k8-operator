@@ -13,21 +13,29 @@ import java.util.Map;
 
 public class Common {
 
-    public static List<EnvVar> buildSconeEnvVars(String heap, String casAddress, String configId, String version, EnvVar... extras) {
+    public static List<EnvVar> buildSconeEnvVars(String heap, String casAddress, String configId) {
         List<EnvVar> envVars = new ArrayList<>();
-        if (version != null) {
-            envVars.add(new EnvVarBuilder().withName("SCONE_VERSION").withValue(version).build());
-        }
-        envVars.add(new EnvVarBuilder().withName("SCONE_HEAP").withValue(heap).build());
-        envVars.add(new EnvVarBuilder().withName("SCONE_CAS_ADDR").withValue(casAddress).build());
-        envVars.add(new EnvVarBuilder().withName("SCONE_CONFIG_ID").withValue(configId).build());
-        envVars.add(new EnvVarBuilder()
-            .withName("SCONE_LAS_ADDR")
-            .withValueFrom(new EnvVarSourceBuilder()
-                .withNewFieldRef().withFieldPath("status.hostIP").endFieldRef()
-                .build())
-            .build());
-        Collections.addAll(envVars, extras);
+
+        Collections.addAll(envVars,
+            new EnvVarBuilder().withName("SCONE_VERSION").withValue("1").build(),
+            new EnvVarBuilder().withName("SCONE_HEAP").withValue(heap).build(),
+            new EnvVarBuilder().withName("SCONE_CAS_ADDR").withValue(casAddress).build(),
+            new EnvVarBuilder().withName("SCONE_CONFIG_ID").withValue(configId).build(),
+            new EnvVarBuilder().withName("BASE_SCONE_CONFIG_ID").withValue(configId).build(),
+            new EnvVarBuilder()
+                .withName("SCONE_LAS_ADDR")
+                .withValueFrom(new EnvVarSourceBuilder()
+                    .withNewFieldRef().withFieldPath("status.hostIP").endFieldRef()
+                    .build())
+                .build(),
+            new EnvVarBuilder().withName("SCONE_ETHREAD_SLEEP_TIME_MSEC").withValue("5ms").build(),
+            new EnvVarBuilder().withName("SCONE_ALLOW_DLOPEN").withValue("1").build(),
+            new EnvVarBuilder().withName("SCONE_MODE").withValue("hw").build(),
+            new EnvVarBuilder().withName("SCONE_SYSLIBS").withValue("1").build(),
+            new EnvVarBuilder().withName("SCONE_LOG").withValue("error").build()
+        );
+
+
         return envVars;
     }
 

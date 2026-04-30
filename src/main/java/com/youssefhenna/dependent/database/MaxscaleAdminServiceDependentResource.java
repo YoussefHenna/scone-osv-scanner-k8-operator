@@ -35,9 +35,9 @@ public class MaxscaleAdminServiceDependentResource extends CRUDKubernetesDepende
                 .withSelector(Map.of("app", deploymentName))
                 .withPorts(new ServicePortBuilder()
                     .withPort(Constants.MAXSCALE_ADMIN_PORT)
-                    .withNewTargetPort("admin")
+                    .withNewTargetPort(Constants.MAXSCALE_ADMIN_PORT_NAME)
                     .withProtocol("TCP")
-                    .withName("admin")
+                    .withName(Constants.MAXSCALE_ADMIN_PORT_NAME)
                     .build())
                 .build())
             .build();

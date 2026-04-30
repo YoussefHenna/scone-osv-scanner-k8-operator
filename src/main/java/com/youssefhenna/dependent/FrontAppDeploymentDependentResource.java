@@ -1,7 +1,8 @@
 package com.youssefhenna.dependent;
 
 import com.youssefhenna.SconeOsvScanner;
-import com.youssefhenna.SconeOsvScannerSpec;
+import com.youssefhenna.spec.FrontAppSpec;
+import com.youssefhenna.spec.SconeOsvScannerSpec;
 import com.youssefhenna.utils.Common;
 import com.youssefhenna.utils.Constants;
 import io.fabric8.kubernetes.api.model.*;
@@ -24,16 +25,16 @@ public class FrontAppDeploymentDependentResource extends CRUDKubernetesDependent
     @Override
     protected Deployment desired(SconeOsvScanner primary, Context<SconeOsvScanner> context) {
         SconeOsvScannerSpec primarySpec = primary.getSpec();
-        SconeOsvScannerSpec.FrontAppSpec spec = primarySpec.getFrontAppSpec();
+        FrontAppSpec spec = primarySpec.getFrontAppSpec();
 
         String name = Constants.getFrontAppDeploymentName(primary.getMetadata().getName());
         String namespace = primary.getMetadata().getNamespace();
 
-        String image = primarySpec.getRegistryUrl() + "/" + primarySpec.getRegistryRepository() + "/" + spec.getImageName() + ":" + spec.getImageVersion();
+        String image = Common.buildImage(primarySpec.getRegistryUrl(), primarySpec.getRegistryRepository(), spec.getImageName(), spec.getImageVersion());
         String imagePullSecretName = primarySpec.getRegistryCredentials().getSecretRef().getName();
 
         String memory = spec.getMemory();
-        List<EnvVar> envVars = Common.buildSconeEnvVars(memory, primarySpec.getCasAddress(), spec.getSconeConfigId(), "1");
+        List<EnvVar> envVars = Common.buildSconeEnvVars(memory, primarySpec.getCasAddress(), spec.getSconeConfigId());
         ResourceRequirements resources = Common.buildSgxResources(memory);
 
         Probe livenessProbe = new ProbeBuilder()

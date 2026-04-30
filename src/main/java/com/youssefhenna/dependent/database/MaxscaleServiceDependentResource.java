@@ -35,9 +35,9 @@ public class MaxscaleServiceDependentResource extends CRUDKubernetesDependentRes
                 .withSelector(Map.of("app", deploymentName))
                 .withPorts(new ServicePortBuilder()
                     .withPort(Constants.MAXSCALE_PORT)
-                    .withNewTargetPort("maxscale")
+                    .withNewTargetPort(Constants.MAXSCALE_PORT_NAME)
                     .withProtocol("TCP")
-                    .withName("maxscale")
+                    .withName(Constants.MAXSCALE_PORT_NAME)
                     .build())
                 .build())
             .build();

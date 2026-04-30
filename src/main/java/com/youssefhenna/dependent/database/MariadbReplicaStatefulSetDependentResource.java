@@ -1,7 +1,9 @@
 package com.youssefhenna.dependent.database;
 
 import com.youssefhenna.SconeOsvScanner;
-import com.youssefhenna.SconeOsvScannerSpec;
+import com.youssefhenna.spec.DatabaseSpec;
+import com.youssefhenna.spec.MariadbSpec;
+import com.youssefhenna.spec.SconeOsvScannerSpec;
 import com.youssefhenna.utils.Common;
 import com.youssefhenna.utils.Constants;
 import io.fabric8.kubernetes.api.model.*;
@@ -30,29 +32,19 @@ public class MariadbReplicaStatefulSetDependentResource extends CRUDKubernetesDe
     @Override
     protected StatefulSet desired(SconeOsvScanner primary, Context<SconeOsvScanner> context) {
         SconeOsvScannerSpec primarySpec = primary.getSpec();
-        SconeOsvScannerSpec.DatabaseSpec dbSpec = primarySpec.getDatabaseSpec();
-        SconeOsvScannerSpec.MariadbSpec spec = dbSpec.getMariadbReplica();
+        DatabaseSpec dbSpec = primarySpec.getDatabaseSpec();
+        MariadbSpec spec = dbSpec.getMariadbReplicaSpec();
 
         String primaryName = primary.getMetadata().getName();
         String name = Constants.getMariadbReplicaName(primaryName);
         String namespace = primary.getMetadata().getNamespace();
         String configMapName = Constants.getMariadbInitScriptsConfigMapName(primaryName);
 
-        String registryRepository = dbSpec.getRegistryRepository() != null
-            ? dbSpec.getRegistryRepository()
-            : primarySpec.getRegistryRepository();
-        String image = Common.buildImage(primarySpec.getRegistryUrl(), registryRepository, spec.getImageName(), spec.getImageVersion());
-        String imagePullSecretName = primarySpec.getRegistryCredentials().getSecretRef().getName();
+        String image = Common.buildImage(dbSpec.getRegistryUrl(), dbSpec.getRegistryRepository(), spec.getImageName(), spec.getImageVersion());
+        String imagePullSecretName = dbSpec.getRegistryCredentials().getSecretRef().getName();
 
         String memory = spec.getMemory();
-        List<EnvVar> envVars = Common.buildSconeEnvVars(memory, primarySpec.getCasAddress(), spec.getSconeConfigId(), "1",
-            new EnvVarBuilder().withName("BASE_SCONE_CONFIG_ID").withValue(spec.getSconeConfigId()).build(),
-            new EnvVarBuilder().withName("SCONE_ETHREAD_SLEEP_TIME_MSEC").withValue("5ms").build(),
-            new EnvVarBuilder().withName("SCONE_ALLOW_DLOPEN").withValue("1").build(),
-            new EnvVarBuilder().withName("SCONE_MODE").withValue("hw").build(),
-            new EnvVarBuilder().withName("SCONE_SYSLIBS").withValue("1").build(),
-            new EnvVarBuilder().withName("SCONE_LOG").withValue("error").build()
-        );
+        List<EnvVar> envVars = Common.buildSconeEnvVars(memory, primarySpec.getCasAddress(), spec.getSconeConfigId());
         ResourceRequirements resources = Common.buildSgxResources(memory);
 
         Probe probe = new ProbeBuilder()
@@ -80,7 +72,7 @@ public class MariadbReplicaStatefulSetDependentResource extends CRUDKubernetesDe
             .withCommand("bash", "-c", "/start/replica-entrypoint.sh")
             .withEnv(envVars)
             .withResources(resources)
-            .withPorts(new ContainerPortBuilder().withName("mariadb").withContainerPort(Constants.MARIADB_REPLICA_PORT).withProtocol("TCP").build())
+            .withPorts(new ContainerPortBuilder().withName(Constants.MARIADB_REPLICA_PORT_NAME).withContainerPort(Constants.MARIADB_REPLICA_PORT).withProtocol("TCP").build())
             .withReadinessProbe(probe)
             .withStartupProbe(new ProbeBuilder(probe).withInitialDelaySeconds(10).withFailureThreshold(10).build())
             .withLivenessProbe(new ProbeBuilder(probe).withFailureThreshold(3).build())
@@ -97,7 +89,7 @@ public class MariadbReplicaStatefulSetDependentResource extends CRUDKubernetesDe
                 .build())
             .withSpec(new PersistentVolumeClaimSpecBuilder()
                 .withAccessModes("ReadWriteOnce")
-                .withStorageClassName(spec.getStorageClassName())
+                .withStorageClassName("default")
                 .withResources(new VolumeResourceRequirementsBuilder()
                     .withRequests(Map.of("storage", new Quantity(spec.getStorageSize())))
                     .build())

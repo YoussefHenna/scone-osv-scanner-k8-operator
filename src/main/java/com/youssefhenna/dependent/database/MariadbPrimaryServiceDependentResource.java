@@ -35,9 +35,9 @@ public class MariadbPrimaryServiceDependentResource extends CRUDKubernetesDepend
                 .withSelector(Map.of("app", statefulSetName))
                 .withPorts(new ServicePortBuilder()
                     .withPort(Constants.MARIADB_PRIMARY_PORT)
-                    .withNewTargetPort("mariadb")
+                    .withNewTargetPort(Constants.MARIADB_PRIMARY_PORT_NAME)
                     .withProtocol("TCP")
-                    .withName("mariadb")
+                    .withName(Constants.MARIADB_PRIMARY_PORT_NAME)
                     .build())
                 .build())
             .build();
