@@ -18,7 +18,12 @@ public class MariadbReplicaStatefulSetDependentResource extends AbstractMariadbS
 
     @Override
     protected MariadbSpec getMariadbSpec(DatabaseSpec dbSpec) {
-        return dbSpec.getMariadbReplicaSpec();
+        return dbSpec.getMariadbReplica();
+    }
+
+    @Override
+    protected int getReplicas(DatabaseSpec dbSpec) {
+        return dbSpec.getMariadbReplica().getReplicas();
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.youssefhenna.dependent;
 
 import com.youssefhenna.SconeOsvScanner;
 import com.youssefhenna.spec.FrontAppSpec;
+import com.youssefhenna.spec.ScannerSpec;
 import com.youssefhenna.spec.SconeOsvScannerSpec;
 import com.youssefhenna.utils.Common;
 import com.youssefhenna.utils.Constants;
@@ -25,13 +26,14 @@ public class FrontAppDeploymentDependentResource extends CRUDKubernetesDependent
     @Override
     protected Deployment desired(SconeOsvScanner primary, Context<SconeOsvScanner> context) {
         SconeOsvScannerSpec primarySpec = primary.getSpec();
-        FrontAppSpec spec = primarySpec.getFrontAppSpec();
+        ScannerSpec scannerSpec = primarySpec.getScanner();
+        FrontAppSpec spec = scannerSpec.getFrontApp();
 
         String name = Constants.getFrontAppDeploymentName(primary.getMetadata().getName());
         String namespace = primary.getMetadata().getNamespace();
 
-        String image = Common.buildImage(primarySpec.getRegistryUrl(), primarySpec.getRegistryRepository(), spec.getImageName(), spec.getImageVersion());
-        String imagePullSecretName = primarySpec.getRegistryCredentials().getSecretRef().getName();
+        String image = Common.buildImage(scannerSpec.getRegistryUrl(), scannerSpec.getRegistryRepository(), spec.getImageName(), spec.getImageVersion());
+        String imagePullSecretName = scannerSpec.getRegistryCredentials().getSecretRef().getName();
 
         String memory = spec.getMemory();
         List<EnvVar> envVars = Common.buildSconeEnvVars(memory, primarySpec.getCasAddress(), spec.getSconeConfigId());

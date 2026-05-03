@@ -3,7 +3,7 @@ package com.youssefhenna.spec;
 import com.youssefhenna.model.RegistryCredentials;
 import io.fabric8.generator.annotation.Required;
 
-public class DatabaseSpec {
+public class ScannerSpec {
     @Required
     private String registryUrl;
 
@@ -13,13 +13,10 @@ public class DatabaseSpec {
     private RegistryCredentials registryCredentials;
 
     @Required
-    private MaxscaleSpec maxscale;
+    private DbManagerSpec dbManager;
 
     @Required
-    private PrimaryMariaDbSpec mariadbPrimary;
-
-    @Required
-    private ReplicaMariaDbSpec mariadbReplica;
+    private FrontAppSpec frontApp;
 
     public String getRegistryUrl() {
         return registryUrl;
@@ -45,27 +42,21 @@ public class DatabaseSpec {
         this.registryCredentials = registryCredentials;
     }
 
-    public MaxscaleSpec getMaxscale() {
-        return maxscale;
+    public DbManagerSpec getDbManager() {
+        return dbManager;
     }
 
-    public void setMaxscale(MaxscaleSpec maxscale) {
-        this.maxscale = maxscale;
+    public void setDbManager(DbManagerSpec dbManager) {
+        this.dbManager = dbManager;
     }
 
-    public PrimaryMariaDbSpec getMariadbPrimary() {
-        return mariadbPrimary;
+    public FrontAppSpec getFrontApp() {
+        return frontApp;
     }
 
-    public void setMariadbPrimary(PrimaryMariaDbSpec mariadbPrimary) {
-        this.mariadbPrimary = mariadbPrimary;
+    public void setFrontApp(FrontAppSpec frontApp) {
+        this.frontApp = frontApp;
     }
 
-    public ReplicaMariaDbSpec getMariadbReplica() {
-        return mariadbReplica;
-    }
 
-    public void setMariadbReplica(ReplicaMariaDbSpec mariadbReplica) {
-        this.mariadbReplica = mariadbReplica;
-    }
 }

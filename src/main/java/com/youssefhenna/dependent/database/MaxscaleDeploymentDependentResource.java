@@ -27,8 +27,8 @@ public class MaxscaleDeploymentDependentResource extends CRUDKubernetesDependent
     @Override
     protected Deployment desired(SconeOsvScanner primary, Context<SconeOsvScanner> context) {
         SconeOsvScannerSpec primarySpec = primary.getSpec();
-        DatabaseSpec dbSpec = primarySpec.getDatabaseSpec();
-        MaxscaleSpec spec = dbSpec.getMaxscaleSpec();
+        DatabaseSpec dbSpec = primarySpec.getDatabase();
+        MaxscaleSpec spec = dbSpec.getMaxscale();
 
         String name = Constants.getMaxscaleDeploymentName(primary.getMetadata().getName());
         String namespace = primary.getMetadata().getNamespace();

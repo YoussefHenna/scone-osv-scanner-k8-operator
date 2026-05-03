@@ -2,6 +2,7 @@ package com.youssefhenna.dependent;
 
 import com.youssefhenna.SconeOsvScanner;
 import com.youssefhenna.spec.DbManagerSpec;
+import com.youssefhenna.spec.ScannerSpec;
 import com.youssefhenna.spec.SconeOsvScannerSpec;
 import com.youssefhenna.utils.Common;
 import com.youssefhenna.utils.Constants;
@@ -28,13 +29,14 @@ public class DbManagerDeploymentDependentResource extends CRUDKubernetesDependen
     @Override
     protected Deployment desired(SconeOsvScanner primary, Context<SconeOsvScanner> context) {
         SconeOsvScannerSpec primarySpec = primary.getSpec();
-        DbManagerSpec spec = primarySpec.getDbManagerSpec();
+        ScannerSpec scannerSpec = primarySpec.getScanner();
+        DbManagerSpec spec = scannerSpec.getDbManager();
 
         String name = Constants.getDbManagerDeploymentName(primary.getMetadata().getName());
         String namespace = primary.getMetadata().getNamespace();
 
-        String image = Common.buildImage(primarySpec.getRegistryUrl(), primarySpec.getRegistryRepository(), spec.getImageName(), spec.getImageVersion());
-        String imagePullSecretName = primarySpec.getRegistryCredentials().getSecretRef().getName();
+        String image = Common.buildImage(scannerSpec.getRegistryUrl(), scannerSpec.getRegistryRepository(), spec.getImageName(), spec.getImageVersion());
+        String imagePullSecretName = scannerSpec.getRegistryCredentials().getSecretRef().getName();
 
         String memory = spec.getMemory();
         List<EnvVar> envVars = Common.buildSconeEnvVars(memory, primarySpec.getCasAddress(), spec.getSconeConfigId());
@@ -48,7 +50,7 @@ public class DbManagerDeploymentDependentResource extends CRUDKubernetesDependen
             .withResources(resources)
             .build();
 
-        return Common.buildDeployment(name, namespace, imagePullSecretName, container, spec.getReplicas());
+        return Common.buildDeployment(name, namespace, imagePullSecretName, container, 1);
     }
 
 }

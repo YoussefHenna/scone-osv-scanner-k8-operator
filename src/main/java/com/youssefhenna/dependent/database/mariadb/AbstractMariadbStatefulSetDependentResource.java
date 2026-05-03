@@ -27,6 +27,7 @@ public abstract class AbstractMariadbStatefulSetDependentResource extends CRUDKu
     }
 
     protected abstract MariadbSpec getMariadbSpec(DatabaseSpec dbSpec);
+    protected abstract int getReplicas(DatabaseSpec dbSpec);
     protected abstract String getStatefulSetName(String primaryName);
     protected abstract String getEntrypointScript();
     protected abstract String getPortName();
@@ -36,7 +37,7 @@ public abstract class AbstractMariadbStatefulSetDependentResource extends CRUDKu
     @Override
     protected StatefulSet desired(SconeOsvScanner primary, Context<SconeOsvScanner> context) {
         SconeOsvScannerSpec primarySpec = primary.getSpec();
-        DatabaseSpec dbSpec = primarySpec.getDatabaseSpec();
+        DatabaseSpec dbSpec = primarySpec.getDatabase();
         MariadbSpec spec = getMariadbSpec(dbSpec);
 
         String primaryName = primary.getMetadata().getName();
@@ -87,7 +88,7 @@ public abstract class AbstractMariadbStatefulSetDependentResource extends CRUDKu
             .build());
 
         StatefulSetSpecBuilder statefulSetSpecBuilder = new StatefulSetSpecBuilder()
-            .withReplicas(spec.getReplicas())
+            .withReplicas(getReplicas(dbSpec))
             .withServiceName(name)
             .withSelector(new LabelSelectorBuilder().addToMatchLabels("app", name).build());
 

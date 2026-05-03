@@ -10,8 +10,6 @@ public class CommonDependantSpec {
     @Required
     private String imageVersion;
 
-    private int replicas = 1;
-
     @Required
     private String memory;
 
@@ -32,14 +30,6 @@ public class CommonDependantSpec {
 
     public void setImageVersion(String imageVersion) {
         this.imageVersion = imageVersion;
-    }
-
-    public int getReplicas() {
-        return replicas;
-    }
-
-    public void setReplicas(int replicas) {
-        this.replicas = replicas;
     }
 
     public String getMemory() {

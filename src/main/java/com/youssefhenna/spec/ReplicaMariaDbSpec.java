@@ -1,6 +1,6 @@
 package com.youssefhenna.spec;
 
-public class FrontAppSpec extends CommonDependantSpec {
+public class ReplicaMariaDbSpec extends MariadbSpec {
     private int replicas = 1;
 
     public int getReplicas() {
