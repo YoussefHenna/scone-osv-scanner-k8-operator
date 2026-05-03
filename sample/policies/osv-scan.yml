@@ -2,6 +2,12 @@ name: osv-scanner-sample/scone-osv-scan
 version: 0.3.10
 
 
+access_policy:
+  read:
+    - ANY
+  update:
+    - CREATOR
+
 services:
   - name: dbmanager
     command: /bin/osvdbmanager
@@ -11,7 +17,7 @@ services:
       MYSQL_HOST: maxscale.default
       MYSQL_PORT: "3306"
       MYSQL_DATABASE: osv
-      MYSQL_ROOT_PASSWORD: $$SCONE::MYSQL_ROOT_PASSWORD$$
+      MYSQL_ROOT_PASSWORD: $$SCONE::MYSQL_ROOT_PASSWORD:hex$$
       MYSQL_CA_PATH: /etc/mysql/ca/ca.crt
       SCONE_SYNC_FSPF_TAG_WITH_CAS: 0
       SCONE_FSPF_UPDATE_POLICY: "on-exit"
@@ -29,7 +35,7 @@ services:
       MYSQL_HOST: maxscale.default
       MYSQL_PORT: "3306"
       MYSQL_DATABASE: osv
-      MYSQL_ROOT_PASSWORD: $$SCONE::MYSQL_ROOT_PASSWORD$$
+      MYSQL_ROOT_PASSWORD: $$SCONE::MYSQL_ROOT_PASSWORD:hex$$
       MYSQL_CA_PATH: /etc/mysql/ca/ca.crt
       TLS_KEY_PATH: /etc/ssl/certs/tls.key
       TLS_CERT_PATH: /etc/ssl/certs/tls.crt

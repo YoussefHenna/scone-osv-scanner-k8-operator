@@ -13,6 +13,7 @@ import io.fabric8.kubernetes.api.model.apps.StatefulSetSpecBuilder;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernetesDependentResource;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -76,19 +77,52 @@ public abstract class AbstractMariadbStatefulSetDependentResource extends CRUDKu
             )
             .build();
 
-        PersistentVolumeClaim datadirClaim = new PersistentVolumeClaimBuilder()
-            .withMetadata(new ObjectMetaBuilder()
+        List<Volume> volumes = new ArrayList<>();
+        volumes.add(new VolumeBuilder()
+            .withName(INIT_SCRIPTS_VOLUME)
+            .withConfigMap(new ConfigMapVolumeSourceBuilder()
+                .withName(configMapName)
+                .withDefaultMode(0511)
+                .build())
+            .build());
+
+        StatefulSetSpecBuilder statefulSetSpecBuilder = new StatefulSetSpecBuilder()
+            .withReplicas(spec.getReplicas())
+            .withServiceName(name)
+            .withSelector(new LabelSelectorBuilder().addToMatchLabels("app", name).build());
+
+        if (spec.isDisablePersistence()) {
+            volumes.add(new VolumeBuilder()
                 .withName(DATADIR_VOLUME)
-                .addToLabels(Constants.DEPENDANT_LABEL_KEY, Constants.DEPENDANT_LABEL_VALUE)
-                .build())
-            .withSpec(new PersistentVolumeClaimSpecBuilder()
-                .withAccessModes("ReadWriteOnce")
-                .withStorageClassName("default")
-                .withResources(new VolumeResourceRequirementsBuilder()
-                    .withRequests(Map.of("storage", new Quantity(spec.getStorageSize())))
+                .withEmptyDir(new EmptyDirVolumeSourceBuilder().build())
+                .build());
+        } else {
+            statefulSetSpecBuilder.withVolumeClaimTemplates(new PersistentVolumeClaimBuilder()
+                .withMetadata(new ObjectMetaBuilder()
+                    .withName(DATADIR_VOLUME)
+                    .addToLabels(Constants.DEPENDANT_LABEL_KEY, Constants.DEPENDANT_LABEL_VALUE)
                     .build())
-                .build())
-            .build();
+                .withSpec(new PersistentVolumeClaimSpecBuilder()
+                    .withAccessModes("ReadWriteOnce")
+                    .withStorageClassName("default")
+                    .withResources(new VolumeResourceRequirementsBuilder()
+                        .withRequests(Map.of("storage", new Quantity(spec.getStorageSize())))
+                        .build())
+                    .build())
+                .build());
+        }
+
+        statefulSetSpecBuilder.withTemplate(new PodTemplateSpecBuilder()
+            .withNewMetadata()
+            .addToLabels("app", name)
+            .endMetadata()
+            .withNewSpec()
+            .withImagePullSecrets(new LocalObjectReferenceBuilder().withName(imagePullSecretName).build())
+            .withInitContainers(getInitContainers(image, envVars, resources))
+            .withContainers(container)
+            .withVolumes(volumes)
+            .endSpec()
+            .build());
 
         return new StatefulSetBuilder()
             .withMetadata(new ObjectMetaBuilder()
@@ -96,29 +130,7 @@ public abstract class AbstractMariadbStatefulSetDependentResource extends CRUDKu
                 .withNamespace(namespace)
                 .addToLabels(Constants.DEPENDANT_LABEL_KEY, Constants.DEPENDANT_LABEL_VALUE)
                 .build())
-            .withSpec(new StatefulSetSpecBuilder()
-                .withReplicas(spec.getReplicas())
-                .withServiceName(name)
-                .withSelector(new LabelSelectorBuilder().addToMatchLabels("app", name).build())
-                .withTemplate(new PodTemplateSpecBuilder()
-                    .withNewMetadata()
-                    .addToLabels("app", name)
-                    .endMetadata()
-                    .withNewSpec()
-                    .withImagePullSecrets(new LocalObjectReferenceBuilder().withName(imagePullSecretName).build())
-                    .withInitContainers(getInitContainers(image, envVars, resources))
-                    .withContainers(container)
-                    .withVolumes(new VolumeBuilder()
-                        .withName(INIT_SCRIPTS_VOLUME)
-                        .withConfigMap(new ConfigMapVolumeSourceBuilder()
-                            .withName(configMapName)
-                            .withDefaultMode(0511)
-                            .build())
-                        .build())
-                    .endSpec()
-                    .build())
-                .withVolumeClaimTemplates(datadirClaim)
-                .build())
+            .withSpec(statefulSetSpecBuilder.build())
             .build();
     }
 }

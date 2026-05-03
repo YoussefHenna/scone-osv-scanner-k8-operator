@@ -5,7 +5,7 @@ version: "0.3.10"
 
 access_policy:
   read:
-   - CREATOR
+   - ANY
   update:
    - CREATOR
 
@@ -23,6 +23,7 @@ secrets:
       - session: osv-scanner-sample/mariadb-backup
       - session: osv-scanner-sample/mariadb-dba-policy
       - session: osv-scanner-sample/mariadb-maxscale
+      - session: osv-scanner-sample/scone-osv-scan
       ## If there is another security policy that should have access
       ## to the mariadb root password, add it to this list.
       # - session: some-other-session
@@ -81,6 +82,7 @@ secrets:
       - mariadb
     export:
       - session: osv-scanner-sample/mariadb-maxscale
+      - session: osv-scanner-sample/scone-osv-scan
 
   - name: maxscale-internal-key
     kind: private-key

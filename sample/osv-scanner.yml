@@ -40,6 +40,7 @@ spec:
       memory: 4G
       sconeConfigId: osv-scanner-sample/mariadb-primary # base config, not a single service
       storageSize: 10Gi
+      disablePersistence: true # for testing on cluster with no access to volumes
     mariadbReplicaSpec:
       imageName: apps
       imageVersion: mariadb-alpine-scone5.0
@@ -47,3 +48,4 @@ spec:
       memory: 4G
       sconeConfigId: osv-scanner-sample/mariadb-replica # base config, not a single service
       storageSize: 10Gi
+      disablePersistence: true # for testing on cluster with no access to volumes

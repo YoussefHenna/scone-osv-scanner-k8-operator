@@ -3,7 +3,7 @@ version: 0.3.10
 
 access_policy:
   read:
-    - CREATOR
+    - ANY
   update:
     - CREATOR
   create_sessions:
