@@ -4,9 +4,10 @@ import com.youssefhenna.dependent.DbManagerDeploymentDependentResource;
 import com.youssefhenna.dependent.FrontAppDeploymentDependentResource;
 import com.youssefhenna.dependent.FrontAppServiceDependentResource;
 import com.youssefhenna.dependent.database.*;
-import com.youssefhenna.model.DeploymentStatus;
+import com.youssefhenna.model.DependantStatus;
 import com.youssefhenna.utils.Constants;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
+import io.fabric8.kubernetes.api.model.apps.StatefulSet;
 import io.javaoperatorsdk.operator.api.reconciler.*;
 import io.javaoperatorsdk.operator.api.reconciler.dependent.Dependent;
 
@@ -34,42 +35,70 @@ public class SconeOsvScannerReconciler implements Reconciler<SconeOsvScanner> {
 
     @Override
     public UpdateControl<SconeOsvScanner> reconcile(SconeOsvScanner resource, Context<SconeOsvScanner> context) {
-        SconeOsvScannerStatus status = new SconeOsvScannerStatus();
+        resource.setStatus(buildStatus(resource, context));
+        return UpdateControl.patchStatus(resource);
+    }
 
+    private SconeOsvScannerStatus buildStatus(SconeOsvScanner resource, Context<SconeOsvScanner> context) {
         Set<Deployment> dependantDeployments = context.getSecondaryResources(Deployment.class);
+        Set<StatefulSet> dependantStatefulSets = context.getSecondaryResources(StatefulSet.class);
 
         String primaryName = resource.getMetadata().getName();
         Deployment dbManager = null;
         Deployment frontApp = null;
+        Deployment maxscale = null;
         for (Deployment d : dependantDeployments) {
             String name = d.getMetadata().getName();
             if (name.equals(Constants.getDbManagerDeploymentName(primaryName))) {
                 dbManager = d;
             } else if (name.equals(Constants.getFrontAppDeploymentName(primaryName))) {
                 frontApp = d;
+            } else if (name.equals(Constants.getMaxscaleDeploymentName(primaryName))) {
+                maxscale = d;
             }
         }
 
-        status.setDbManagerDeploymentStatus(resolveDeploymentStatus(dbManager));
-        status.setFrontAppDeploymentStatus(resolveDeploymentStatus(frontApp));
-        resource.setStatus(status);
+        StatefulSet mariadbPrimary = null;
+        StatefulSet mariadbReplica = null;
+        for (StatefulSet ss : dependantStatefulSets) {
+            String name = ss.getMetadata().getName();
+            if (name.equals(Constants.getMariadbPrimaryName(primaryName))) {
+                mariadbPrimary = ss;
+            } else if (name.equals(Constants.getMariadbReplicaName(primaryName))) {
+                mariadbReplica = ss;
+            }
+        }
 
-        return UpdateControl.patchStatus(resource);
+        SconeOsvScannerStatus status = new SconeOsvScannerStatus();
+        status.setDbManagerStatus(resolveDeploymentStatus(dbManager));
+        status.setFrontAppStatus(resolveDeploymentStatus(frontApp));
+        status.setMaxscaleStatus(resolveDeploymentStatus(maxscale));
+        status.setMariadbPrimaryStatus(resolveStatefulSetStatus(mariadbPrimary));
+        status.setMariadbReplicaStatus(resolveStatefulSetStatus(mariadbReplica));
+        return status;
     }
 
-    private DeploymentStatus resolveDeploymentStatus(Deployment deployment) {
+    private DependantStatus resolveDeploymentStatus(Deployment deployment) {
         if (deployment == null || deployment.getStatus() == null) {
-            return DeploymentStatus.STARTING;
+            return DependantStatus.STARTING;
         }
-        Integer ready = deployment.getStatus().getReadyReplicas();
-        Integer total = deployment.getStatus().getReplicas();
+        return resolveReplicaStatus(deployment.getStatus().getReadyReplicas(), deployment.getStatus().getReplicas());
+    }
+
+    private DependantStatus resolveStatefulSetStatus(StatefulSet statefulSet) {
+        if (statefulSet == null || statefulSet.getStatus() == null) {
+            return DependantStatus.STARTING;
+        }
+        return resolveReplicaStatus(statefulSet.getStatus().getReadyReplicas(), statefulSet.getStatus().getReplicas());
+    }
+
+    private DependantStatus resolveReplicaStatus(Integer ready, Integer total) {
         if (ready != null && ready.equals(total) && total > 0) {
-            return DeploymentStatus.RUNNING;
+            return DependantStatus.RUNNING;
         }
-        Integer unavailable = deployment.getStatus().getUnavailableReplicas();
-        if (unavailable != null && unavailable > 0) {
-            return DeploymentStatus.FAILING;
+        if (ready != null && total != null && ready < total) {
+            return DependantStatus.FAILING;
         }
-        return DeploymentStatus.STARTING;
+        return DependantStatus.STARTING;
     }
 }

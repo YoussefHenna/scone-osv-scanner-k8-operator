@@ -1,6 +1,6 @@
 package com.youssefhenna.model;
 
-public enum DeploymentStatus {
+public enum DependantStatus {
     RUNNING,
     STARTING,
     FAILING

@@ -1,25 +1,52 @@
 package com.youssefhenna;
 
-import com.youssefhenna.model.DeploymentStatus;
+import com.youssefhenna.model.DependantStatus;
 
 public class SconeOsvScannerStatus {
 
-    private DeploymentStatus dbManagerDeploymentStatus;
-    private DeploymentStatus frontAppDeploymentStatus;
+    private DependantStatus dbManagerStatus;
+    private DependantStatus frontAppStatus;
+    private DependantStatus maxscaleStatus;
+    private DependantStatus mariadbPrimaryStatus;
+    private DependantStatus mariadbReplicaStatus;
 
-    public DeploymentStatus getDbManagerDeploymentStatus() {
-        return dbManagerDeploymentStatus;
+    public DependantStatus getDbManagerStatus() {
+        return dbManagerStatus;
     }
 
-    public void setDbManagerDeploymentStatus(DeploymentStatus dbManagerDeploymentStatus) {
-        this.dbManagerDeploymentStatus = dbManagerDeploymentStatus;
+    public void setDbManagerStatus(DependantStatus dbManagerStatus) {
+        this.dbManagerStatus = dbManagerStatus;
     }
 
-    public DeploymentStatus getFrontAppDeploymentStatus() {
-        return frontAppDeploymentStatus;
+    public DependantStatus getFrontAppStatus() {
+        return frontAppStatus;
     }
 
-    public void setFrontAppDeploymentStatus(DeploymentStatus frontAppDeploymentStatus) {
-        this.frontAppDeploymentStatus = frontAppDeploymentStatus;
+    public void setFrontAppStatus(DependantStatus frontAppStatus) {
+        this.frontAppStatus = frontAppStatus;
+    }
+
+    public DependantStatus getMaxscaleStatus() {
+        return maxscaleStatus;
+    }
+
+    public void setMaxscaleStatus(DependantStatus maxscaleStatus) {
+        this.maxscaleStatus = maxscaleStatus;
+    }
+
+    public DependantStatus getMariadbPrimaryStatus() {
+        return mariadbPrimaryStatus;
+    }
+
+    public void setMariadbPrimaryStatus(DependantStatus mariadbPrimaryStatus) {
+        this.mariadbPrimaryStatus = mariadbPrimaryStatus;
+    }
+
+    public DependantStatus getMariadbReplicaStatus() {
+        return mariadbReplicaStatus;
+    }
+
+    public void setMariadbReplicaStatus(DependantStatus mariadbReplicaStatus) {
+        this.mariadbReplicaStatus = mariadbReplicaStatus;
     }
 }
