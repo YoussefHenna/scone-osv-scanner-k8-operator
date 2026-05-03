@@ -1,4 +1,4 @@
-package com.youssefhenna.spec;
+package com.youssefhenna.spec.database;
 
 public class ReplicaMariaDbSpec extends MariadbSpec {
     private int replicas = 1;

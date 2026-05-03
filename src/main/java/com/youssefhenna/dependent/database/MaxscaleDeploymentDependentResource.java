@@ -1,8 +1,8 @@
 package com.youssefhenna.dependent.database;
 
 import com.youssefhenna.SconeOsvScanner;
-import com.youssefhenna.spec.DatabaseSpec;
-import com.youssefhenna.spec.MaxscaleSpec;
+import com.youssefhenna.spec.database.DatabaseSpec;
+import com.youssefhenna.spec.database.MaxscaleSpec;
 import com.youssefhenna.spec.SconeOsvScannerSpec;
 import com.youssefhenna.utils.Common;
 import com.youssefhenna.utils.Constants;

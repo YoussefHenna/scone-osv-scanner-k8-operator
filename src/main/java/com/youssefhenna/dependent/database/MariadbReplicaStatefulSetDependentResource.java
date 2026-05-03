@@ -1,8 +1,8 @@
 package com.youssefhenna.dependent.database;
 
 import com.youssefhenna.dependent.database.mariadb.AbstractMariadbStatefulSetDependentResource;
-import com.youssefhenna.spec.DatabaseSpec;
-import com.youssefhenna.spec.MariadbSpec;
+import com.youssefhenna.spec.database.DatabaseSpec;
+import com.youssefhenna.spec.database.MariadbSpec;
 import com.youssefhenna.utils.Constants;
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;

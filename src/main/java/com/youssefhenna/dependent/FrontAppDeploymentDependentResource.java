@@ -1,8 +1,8 @@
 package com.youssefhenna.dependent;
 
 import com.youssefhenna.SconeOsvScanner;
-import com.youssefhenna.spec.FrontAppSpec;
-import com.youssefhenna.spec.ScannerSpec;
+import com.youssefhenna.spec.scanner.FrontAppSpec;
+import com.youssefhenna.spec.scanner.ScannerSpec;
 import com.youssefhenna.spec.SconeOsvScannerSpec;
 import com.youssefhenna.utils.Common;
 import com.youssefhenna.utils.Constants;

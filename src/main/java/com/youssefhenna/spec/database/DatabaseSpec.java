@@ -1,4 +1,4 @@
-package com.youssefhenna.spec;
+package com.youssefhenna.spec.database;
 
 import com.youssefhenna.model.RegistryCredentials;
 import io.fabric8.generator.annotation.Required;

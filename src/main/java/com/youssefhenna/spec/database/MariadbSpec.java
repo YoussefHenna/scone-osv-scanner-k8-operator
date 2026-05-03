@@ -1,5 +1,6 @@
-package com.youssefhenna.spec;
+package com.youssefhenna.spec.database;
 
+import com.youssefhenna.spec.CommonDependantSpec;
 import io.fabric8.generator.annotation.Required;
 
 public class MariadbSpec extends CommonDependantSpec {

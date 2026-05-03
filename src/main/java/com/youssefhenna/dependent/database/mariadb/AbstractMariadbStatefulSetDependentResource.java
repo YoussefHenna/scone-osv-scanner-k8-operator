@@ -1,8 +1,8 @@
 package com.youssefhenna.dependent.database.mariadb;
 
 import com.youssefhenna.SconeOsvScanner;
-import com.youssefhenna.spec.DatabaseSpec;
-import com.youssefhenna.spec.MariadbSpec;
+import com.youssefhenna.spec.database.DatabaseSpec;
+import com.youssefhenna.spec.database.MariadbSpec;
 import com.youssefhenna.spec.SconeOsvScannerSpec;
 import com.youssefhenna.utils.Common;
 import com.youssefhenna.utils.Constants;

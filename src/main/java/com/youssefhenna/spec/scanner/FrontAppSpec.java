@@ -1,6 +1,8 @@
-package com.youssefhenna.spec;
+package com.youssefhenna.spec.scanner;
 
-public class MaxscaleSpec extends CommonDependantSpec {
+import com.youssefhenna.spec.CommonDependantSpec;
+
+public class FrontAppSpec extends CommonDependantSpec {
     private int replicas = 1;
 
     public int getReplicas() {

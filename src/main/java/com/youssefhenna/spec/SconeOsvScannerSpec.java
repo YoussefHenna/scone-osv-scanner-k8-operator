@@ -1,6 +1,8 @@
 package com.youssefhenna.spec;
 
-import com.youssefhenna.model.RegistryCredentials;
+import com.youssefhenna.spec.database.DatabaseSpec;
+import com.youssefhenna.spec.policy.PolicyUpstreamSpec;
+import com.youssefhenna.spec.scanner.ScannerSpec;
 import io.fabric8.generator.annotation.Required;
 
 public class SconeOsvScannerSpec {
@@ -12,6 +14,8 @@ public class SconeOsvScannerSpec {
 
     @Required
     private DatabaseSpec database;
+
+    private PolicyUpstreamSpec policyUpstream;
 
     public String getCasAddress() {
         return casAddress;
@@ -37,5 +41,11 @@ public class SconeOsvScannerSpec {
         this.database = database;
     }
 
+    public PolicyUpstreamSpec getPolicyUpstream() {
+        return policyUpstream;
+    }
 
+    public void setPolicyUpstream(PolicyUpstreamSpec policyUpstream) {
+        this.policyUpstream = policyUpstream;
+    }
 }

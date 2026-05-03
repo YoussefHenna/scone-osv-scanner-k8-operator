@@ -1,8 +1,8 @@
 package com.youssefhenna.dependent;
 
 import com.youssefhenna.SconeOsvScanner;
-import com.youssefhenna.spec.DbManagerSpec;
-import com.youssefhenna.spec.ScannerSpec;
+import com.youssefhenna.spec.scanner.DbManagerSpec;
+import com.youssefhenna.spec.scanner.ScannerSpec;
 import com.youssefhenna.spec.SconeOsvScannerSpec;
 import com.youssefhenna.utils.Common;
 import com.youssefhenna.utils.Constants;
