@@ -17,8 +17,8 @@ function get_mrenclave {
 }
 
 # Script gets and displays all required MRENCLAVES
-MARIADB_IMAGE=${MARIADB_IMAGE:-"registry.scontain.com/sconecuratedimages/apps:mariadb-alpine-scone5.0"}
-MAXSCALE_IMAGE=${MAXSCALE_IMAGE:-"registry.scontain.com/sconecuratedimages/apps:maxscale-2.5-alpine-scone5"}
+MARIADB_IMAGE=${MARIADB_IMAGE:-"registry.scontain.com/scone.cloud/mariadb-11-alpine:6.0.6"}
+MAXSCALE_IMAGE=${MAXSCALE_IMAGE:-"registry.scontain.com/sconecuratedimages/experimental/maxscale:24.02.1-binary-fs-scone5.8.0-291-ga50b0d039-matteus_mariadb-prod"}
 SOS_OSV_SCAN_IMAGE=${SOS_OSV_SCAN_IMAGE:-"registry.scontain.com/scone.cloud/sos-images/osvscan:5.10.0-rc.5"}
 SOS_DB_MANAGER_IMAGE=${SOS_DB_MANAGER_IMAGE:-"registry.scontain.com/scone.cloud/sos-images/dbmanager:5.10.0-rc.5"}
 

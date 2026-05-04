@@ -33,7 +33,7 @@ public class MaxscaleDeploymentDependentResource extends CRUDKubernetesDependent
         String name = Constants.getMaxscaleDeploymentName(primary.getMetadata().getName());
         String namespace = primary.getMetadata().getNamespace();
 
-        String image = Common.buildImage(dbSpec.getRegistryUrl(), dbSpec.getRegistryRepository(), spec.getImageName(), spec.getImageVersion());
+        String image = Common.buildImage(dbSpec.getRegistryUrl(), spec.getImageName(), spec.getImageVersion());
         String imagePullSecretName = dbSpec.getRegistryCredentials().getSecretRef().getName();
 
         String memory = spec.getMemory();

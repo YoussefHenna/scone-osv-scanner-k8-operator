@@ -35,7 +35,7 @@ public class DbManagerDeploymentDependentResource extends CRUDKubernetesDependen
         String name = Constants.getDbManagerDeploymentName(primary.getMetadata().getName());
         String namespace = primary.getMetadata().getNamespace();
 
-        String image = Common.buildImage(scannerSpec.getRegistryUrl(), scannerSpec.getRegistryRepository(), spec.getImageName(), spec.getImageVersion());
+        String image = Common.buildImage(scannerSpec.getRegistryUrl(), spec.getImageName(), spec.getImageVersion());
         String imagePullSecretName = scannerSpec.getRegistryCredentials().getSecretRef().getName();
 
         String memory = spec.getMemory();

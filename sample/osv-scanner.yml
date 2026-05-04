@@ -4,45 +4,104 @@ metadata:
   name: osv-scanner-sample
 spec:
   casAddress: scone-cas.cf
+  policyUpstream:
+    gitUrl: https://github.com/YoussefHenna/scone-osv-scanner-policies
+    branch: main
+    gpgKeys:
+      - |
+        -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+        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
+        n/JPwE6bObP7aHAQr6e5a1Vxk+8=
+        =ilcr
+        -----END PGP PUBLIC KEY BLOCK-----
+    poll:
+      every: 10
+      unit: MINUTES
   scanner:
     registryUrl: registry.scontain.com
-    registryRepository: scone.cloud/sos-images
     registryCredentials:
       secretRef:
         name: scontain-git-secret
     dbManager:
-      imageName: dbmanager
+      imageName: scone.cloud/sos-images/dbmanager
       imageVersion: 5.10.0-rc.5
       memory: 12G
       sconeConfigId: osv-scanner-sample/scone-osv-scan/dbmanager
     frontApp:
-      imageName: osvscan
+      imageName: scone.cloud/sos-images/osvscan
       imageVersion: 5.10.0-rc.5
       replicas: 1
       memory: 5G
       sconeConfigId: osv-scanner-sample/scone-osv-scan/osvscan
   database:
     registryUrl: registry.scontain.com
-    registryRepository: sconecuratedimages
     registryCredentials:
       secretRef:
         name: scontain-git-secret
     maxscale:
-      imageName: apps
-      imageVersion: maxscale-2.5-alpine-scone5
+      imageName: sconecuratedimages/experimental/maxscale
+      imageVersion: 24.02.1-binary-fs-scone5.8.0-291-ga50b0d039-matteus_mariadb-prod
       replicas: 1
       memory: 2G
       sconeConfigId: osv-scanner-sample/mariadb-maxscale/maxscale
     mariadbPrimary:
-      imageName: apps
-      imageVersion: mariadb-alpine-scone5.0
+      imageName: scone.cloud/mariadb-11-alpine
+      imageVersion: 6.0.6
       memory: 4G
       sconeConfigId: osv-scanner-sample/mariadb-primary # base config, not a single service
       storageSize: 10Gi
       disablePersistence: true # for testing on cluster with no access to volumes
     mariadbReplica:
-      imageName: apps
-      imageVersion: mariadb-alpine-scone5.0
+      imageName: scone.cloud/mariadb-11-alpine
+      imageVersion: 6.0.6
       replicas: 1
       memory: 4G
       sconeConfigId: osv-scanner-sample/mariadb-replica # base config, not a single service

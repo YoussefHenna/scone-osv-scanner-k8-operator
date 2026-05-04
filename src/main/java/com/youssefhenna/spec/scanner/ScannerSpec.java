@@ -7,9 +7,6 @@ public class ScannerSpec {
     @Required
     private String registryUrl;
 
-    @Required
-    private String registryRepository;
-
     private RegistryCredentials registryCredentials;
 
     @Required
@@ -24,14 +21,6 @@ public class ScannerSpec {
 
     public void setRegistryUrl(String registryUrl) {
         this.registryUrl = registryUrl;
-    }
-
-    public String getRegistryRepository() {
-        return registryRepository;
-    }
-
-    public void setRegistryRepository(String registryRepository) {
-        this.registryRepository = registryRepository;
     }
 
     public RegistryCredentials getRegistryCredentials() {

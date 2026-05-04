@@ -16,6 +16,7 @@ public class PolicyUpstreamSpec {
     @Required
     private ArrayList<String> gpgKeys;
 
+    @Required
     private PollConfig poll;
 
     public String getGitUrl() {

@@ -39,8 +39,8 @@ public class Common {
         return envVars;
     }
 
-    public static String buildImage(String registryUrl, String registryRepository, String imageName, String imageVersion) {
-        return registryUrl + "/" + registryRepository + "/" + imageName + ":" + imageVersion;
+    public static String buildImage(String registryUrl, String imageName, String imageVersion) {
+        return registryUrl + "/" + imageName + ":" + imageVersion;
     }
 
     public static ResourceRequirements buildSgxResources(String memory) {

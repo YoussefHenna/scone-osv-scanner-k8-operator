@@ -45,7 +45,7 @@ public abstract class AbstractMariadbStatefulSetDependentResource extends CRUDKu
         String namespace = primary.getMetadata().getNamespace();
         String configMapName = Constants.getMariadbInitScriptsConfigMapName(primaryName);
 
-        String image = Common.buildImage(dbSpec.getRegistryUrl(), dbSpec.getRegistryRepository(), spec.getImageName(), spec.getImageVersion());
+        String image = Common.buildImage(dbSpec.getRegistryUrl(), spec.getImageName(), spec.getImageVersion());
         String imagePullSecretName = dbSpec.getRegistryCredentials().getSecretRef().getName();
 
         String memory = spec.getMemory();
