@@ -26,8 +26,8 @@ public abstract class AbstractMariadbStatefulSetDependentResource extends CRUDKu
         super(StatefulSet.class);
     }
 
-    protected abstract MariadbSpec getMariadbSpec(DatabaseSpec dbSpec);
     protected abstract int getReplicas(DatabaseSpec dbSpec);
+    protected abstract String getConfigId(MariadbSpec spec);
     protected abstract String getStatefulSetName(String primaryName);
     protected abstract String getEntrypointScript();
     protected abstract String getPortName();
@@ -38,7 +38,7 @@ public abstract class AbstractMariadbStatefulSetDependentResource extends CRUDKu
     protected StatefulSet desired(SconeOsvScanner primary, Context<SconeOsvScanner> context) {
         SconeOsvScannerSpec primarySpec = primary.getSpec();
         DatabaseSpec dbSpec = primarySpec.getDatabase();
-        MariadbSpec spec = getMariadbSpec(dbSpec);
+        MariadbSpec spec = dbSpec.getMariadb();
 
         String primaryName = primary.getMetadata().getName();
         String name = getStatefulSetName(primaryName);
@@ -49,7 +49,7 @@ public abstract class AbstractMariadbStatefulSetDependentResource extends CRUDKu
         String imagePullSecretName = dbSpec.getRegistryCredentials().getSecretRef().getName();
 
         String memory = spec.getMemory();
-        List<EnvVar> envVars = Common.buildSconeEnvVars(memory, primarySpec.getCasAddress(), spec.getSconeConfigId());
+        List<EnvVar> envVars = Common.buildSconeEnvVars(memory, primarySpec.getCasAddress(), getConfigId(spec));
         ResourceRequirements resources = Common.buildSgxResources(memory);
 
         Probe probe = new ProbeBuilder()
@@ -68,6 +68,7 @@ public abstract class AbstractMariadbStatefulSetDependentResource extends CRUDKu
             .withCommand("bash", "-c", getEntrypointScript())
             .withEnv(envVars)
             .withResources(resources)
+            .withSecurityContext(new SecurityContextBuilder().withRunAsUser(0L).build())
             .withPorts(new ContainerPortBuilder().withName(getPortName()).withContainerPort(getPort()).withProtocol("TCP").build())
             .withReadinessProbe(probe)
             .withStartupProbe(new ProbeBuilder(probe).withInitialDelaySeconds(10).withFailureThreshold(10).build())
@@ -105,7 +106,7 @@ public abstract class AbstractMariadbStatefulSetDependentResource extends CRUDKu
                     .build())
                 .withSpec(new PersistentVolumeClaimSpecBuilder()
                     .withAccessModes("ReadWriteOnce")
-                    .withStorageClassName("default")
+                    .withStorageClassName(spec.getStorageClassName())
                     .withResources(new VolumeResourceRequirementsBuilder()
                         .withRequests(Map.of("storage", new Quantity(spec.getStorageSize())))
                         .build())

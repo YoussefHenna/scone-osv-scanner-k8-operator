@@ -13,10 +13,7 @@ public class DatabaseSpec {
     private MaxscaleSpec maxscale;
 
     @Required
-    private PrimaryMariaDbSpec mariadbPrimary;
-
-    @Required
-    private ReplicaMariaDbSpec mariadbReplica;
+    private MariadbSpec mariadb;
 
     public String getRegistryUrl() {
         return registryUrl;
@@ -42,19 +39,11 @@ public class DatabaseSpec {
         this.maxscale = maxscale;
     }
 
-    public PrimaryMariaDbSpec getMariadbPrimary() {
-        return mariadbPrimary;
+    public MariadbSpec getMariadb() {
+        return mariadb;
     }
 
-    public void setMariadbPrimary(PrimaryMariaDbSpec mariadbPrimary) {
-        this.mariadbPrimary = mariadbPrimary;
-    }
-
-    public ReplicaMariaDbSpec getMariadbReplica() {
-        return mariadbReplica;
-    }
-
-    public void setMariadbReplica(ReplicaMariaDbSpec mariadbReplica) {
-        this.mariadbReplica = mariadbReplica;
+    public void setMariadb(MariadbSpec mariadb) {
+        this.mariadb = mariadb;
     }
 }

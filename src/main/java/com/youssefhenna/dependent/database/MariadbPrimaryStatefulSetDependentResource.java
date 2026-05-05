@@ -16,13 +16,13 @@ import java.util.List;
 public class MariadbPrimaryStatefulSetDependentResource extends AbstractMariadbStatefulSetDependentResource {
 
     @Override
-    protected MariadbSpec getMariadbSpec(DatabaseSpec dbSpec) {
-        return dbSpec.getMariadbPrimary();
+    protected int getReplicas(DatabaseSpec dbSpec) {
+        return 1;
     }
 
     @Override
-    protected int getReplicas(DatabaseSpec dbSpec) {
-        return 1;
+    protected String getConfigId(MariadbSpec spec) {
+        return spec.getSconeConfigId();
     }
 
     @Override
