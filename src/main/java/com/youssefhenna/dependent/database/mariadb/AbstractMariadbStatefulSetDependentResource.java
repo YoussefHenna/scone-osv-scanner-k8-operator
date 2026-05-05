@@ -68,7 +68,6 @@ public abstract class AbstractMariadbStatefulSetDependentResource extends CRUDKu
             .withCommand("bash", "-c", getEntrypointScript())
             .withEnv(envVars)
             .withResources(resources)
-            .withSecurityContext(new SecurityContextBuilder().withRunAsUser(0L).build())
             .withPorts(new ContainerPortBuilder().withName(getPortName()).withContainerPort(getPort()).withProtocol("TCP").build())
             .withReadinessProbe(probe)
             .withStartupProbe(new ProbeBuilder(probe).withInitialDelaySeconds(10).withFailureThreshold(10).build())
