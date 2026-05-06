@@ -21,7 +21,7 @@ services:
     command:
       - mysqladmin
       - status
-      - -hmariadb-primary
+      - -h${MARIADB_PRIMARY_SERVICE_NAME}
       - -uroot
       - -p$$SCONE::MYSQL_ROOT_PASSWORD:hex$$
       - --connect-timeout=5
@@ -32,7 +32,7 @@ services:
       SCONE_NETWORK_SHIELD: protected
       SCONE_NETWORK_SHIELD_UNSUPPORTED_PROTOCOLS: unprotected # allow dns resolution
       SCONE_NETWORK_SHIELD_CLIENT_1: protected
-      SCONE_NETWORK_SHIELD_CLIENT_1_DESTINATION: "TCP:mariadb-primary:3306"
+      SCONE_NETWORK_SHIELD_CLIENT_1_DESTINATION: "TCP:${MARIADB_PRIMARY_SERVICE_NAME}:3306"
       SCONE_NETWORK_SHIELD_CLIENT_1_DESTINATION_IP: "*"
       SCONE_NETWORK_SHIELD_CLIENT_1_IDENTITY: |
         $$SCONE::setupClientCert:privatekey:pkcs8:pem$$
@@ -55,7 +55,7 @@ services:
         $$SCONE::setupClientCert:privatekey:pkcs8:pem$$
         $$SCONE::setupClientCert:crt:pem$$"
       SCONE_NETWORK_SHIELD_CLIENT_1_SERVER_AUTH: $$SCONE::MARIADB_CA_CERT$$
-      SCONE_NETWORK_SHIELD_CLIENT_1_SERVER_DNS_NAME: mariadb-replica
+      SCONE_NETWORK_SHIELD_CLIENT_1_SERVER_DNS_NAME: ${MARIADB_REPLICA_SERVICE_NAME}
       SCONE_NETWORK_SHIELD_CLIENT_1_FLAGS: TolerateInsecureUnixCredentials
   - name: db
     image_name: db_image
@@ -88,7 +88,7 @@ services:
       SCONE_NETWORK_SHIELD_CLIENT_REPLICATION_IDENTITY: |
         $$SCONE::mariadb:privatekey:pkcs8:pem$$
         $$SCONE::mariadb:crt:pem$$"
-      SCONE_NETWORK_SHIELD_CLIENT_REPLICATION_DESTINATION: "TCP:mariadb-primary:3306"
+      SCONE_NETWORK_SHIELD_CLIENT_REPLICATION_DESTINATION: "TCP:${MARIADB_PRIMARY_SERVICE_NAME}:3306"
       SCONE_NETWORK_SHIELD_CLIENT_REPLICATION_DESTINATION_IP: "*"
       SCONE_NETWORK_SHIELD_CLIENT_REPLICATION_SERVER_AUTH: $$SCONE::MARIADB_CA_CERT$$
 
@@ -158,14 +158,14 @@ services:
         $$SCONE::setupClientCert:privatekey:pkcs8:pem$$
         $$SCONE::setupClientCert:crt:pem$$
       SCONE_NETWORK_SHIELD_CLIENT_1_SERVER_AUTH: $$SCONE::MARIADB_CA_CERT$$
-      SCONE_NETWORK_SHIELD_CLIENT_1_SERVER_DNS_NAME: mariadb-replica
+      SCONE_NETWORK_SHIELD_CLIENT_1_SERVER_DNS_NAME: ${MARIADB_REPLICA_SERVICE_NAME}
       SCONE_NETWORK_SHIELD_CLIENT_1_FLAGS: TolerateInsecureUnixCredentials
 
   - name: setup_replica_on_primary_conf
     image_name: replica_setup_image
     command:
       - mysql
-      - -hmariadb-primary
+      - -h${MARIADB_PRIMARY_SERVICE_NAME}
       - -uroot
       - -p$$SCONE::MYSQL_ROOT_PASSWORD:hex$$
       - --connect-timeout=5
@@ -179,7 +179,7 @@ services:
       SCONE_NETWORK_SHIELD: protected
       SCONE_NETWORK_SHIELD_UNSUPPORTED_PROTOCOLS: unprotected # allow dns resolution
       SCONE_NETWORK_SHIELD_CLIENT_REPLICATION: protected
-      SCONE_NETWORK_SHIELD_CLIENT_REPLICATION_DESTINATION: "TCP:mariadb-primary:3306"
+      SCONE_NETWORK_SHIELD_CLIENT_REPLICATION_DESTINATION: "TCP:${MARIADB_PRIMARY_SERVICE_NAME}:3306"
       SCONE_NETWORK_SHIELD_CLIENT_REPLICATION_DESTINATION_IP: "*"
       SCONE_NETWORK_SHIELD_CLIENT_REPLICATION_IDENTITY: |
         $$SCONE::setupClientCert:privatekey:pkcs8:pem$$
@@ -198,7 +198,7 @@ images:
           -- Setup mariadb server_id
           STOP SLAVE;
           SELECT 'stopped replica (slave) thread' replica_setup_image;
-          CHANGE MASTER TO MASTER_HOST='mariadb-primary',
+          CHANGE MASTER TO MASTER_HOST='${MARIADB_PRIMARY_SERVICE_NAME}',
             MASTER_USER='replica',
             MASTER_PASSWORD='$$SCONE::REPLICATION_USER_PASSWORD:hex$$',
             MASTER_LOG_FILE='mysql-bin.000001',
@@ -212,7 +212,7 @@ images:
           -- Setup mariadb server_id
           STOP SLAVE;
           SELECT 'stopped replica (slave) thread' replica_setup_image;
-          CHANGE MASTER TO MASTER_HOST='mariadb-replica',
+          CHANGE MASTER TO MASTER_HOST='${MARIADB_REPLICA_SERVICE_NAME}',
             MASTER_PORT=3307,
             MASTER_USER='replica',
             MASTER_PASSWORD='$$SCONE::REPLICATION_USER_PASSWORD:hex$$',
@@ -239,11 +239,6 @@ images:
           GRANT REPLICATION SLAVE ON *.* TO 'replica'@'%';
           FLUSH PRIVILEGES;
           SELECT 'replica user configured' mysql_client_setup_image;
-          -- Create user for the metrics exporter
-          CREATE USER 'metrics'@'%' IDENTIFIED BY '$$SCONE::METRICS_EXPORTER_PASSWORD:hex$$' WITH MAX_USER_CONNECTIONS 3;
-          GRANT PROCESS, REPLICATION CLIENT, SELECT, SLAVE MONITOR ON *.* TO 'metrics'@'%';
-          FLUSH PRIVILEGES;
-          SELECT 'metrics user configured' mysql_client_setup_image;
           -- # Fix 1062 error
           RESET MASTER;
           SELECT 'master reset executed' mysql_client_setup_image;

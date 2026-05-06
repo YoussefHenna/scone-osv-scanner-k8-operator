@@ -46,6 +46,7 @@ if [[ ! -e "${MYSQL_DATADIR}/ibdata1" ]]; then
     export SCONE_CONFIG_ID=$BOOTSTRAP_CONFIG_ID
 
     rm -rf ${MYSQL_DATADIR}/* /tmp/* /var/tmp/*
+    touch /etc/keys.txt && chown mysql:mysql /etc/keys.txt && chmod 600 /etc/keys.txt
     su mysql -c 'mysql_install_db --user=mysql --datadir=${MYSQL_DATADIR} --rpm --innodb-use-native-aio=0'
     rm -rf ${MYSQL_DATADIR}/test
 

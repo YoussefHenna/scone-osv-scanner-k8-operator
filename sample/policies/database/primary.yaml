@@ -32,7 +32,7 @@ services:
         $$SCONE::setupClientCert:privatekey:pkcs8:pem$$
         $$SCONE::setupClientCert:crt:pem$$"
       SCONE_NETWORK_SHIELD_CLIENT_1_SERVER_AUTH: $$SCONE::MARIADB_CA_CERT$$
-      SCONE_NETWORK_SHIELD_CLIENT_1_SERVER_DNS_NAME: mariadb-primary
+      SCONE_NETWORK_SHIELD_CLIENT_1_SERVER_DNS_NAME: ${MARIADB_PRIMARY_SERVICE_NAME}
       SCONE_NETWORK_SHIELD_CLIENT_1_FLAGS: TolerateInsecureUnixCredentials
   - name: db
     image_name: db_image
@@ -65,7 +65,7 @@ services:
       SCONE_NETWORK_SHIELD_CLIENT_REPLICATION_IDENTITY: |
         $$SCONE::mariadb:privatekey:pkcs8:pem$$
         $$SCONE::mariadb:crt:pem$$"
-      SCONE_NETWORK_SHIELD_CLIENT_REPLICATION_DESTINATION: "TCP:mariadb-replica:3307"
+      SCONE_NETWORK_SHIELD_CLIENT_REPLICATION_DESTINATION: "TCP:${MARIADB_REPLICA_SERVICE_NAME}:3307"
       SCONE_NETWORK_SHIELD_CLIENT_REPLICATION_DESTINATION_IP: "*"
       SCONE_NETWORK_SHIELD_CLIENT_REPLICATION_SERVER_AUTH: $$SCONE::MARIADB_CA_CERT$$
 
@@ -137,11 +137,6 @@ images:
           GRANT REPLICATION SLAVE ON *.* TO 'replica'@'%';
           FLUSH PRIVILEGES;
           SELECT 'replica user configured' mysql_client_setup_image;
-          -- Create user for the metrics exporter
-          CREATE USER 'metrics'@'%' IDENTIFIED BY '$$SCONE::METRICS_EXPORTER_PASSWORD:hex$$' WITH MAX_USER_CONNECTIONS 3;
-          GRANT PROCESS, REPLICATION CLIENT, SELECT, SLAVE MONITOR ON *.* TO 'metrics'@'%' ;
-          FLUSH PRIVILEGES;
-          SELECT 'metrics user configured' mysql_client_setup_image;
           -- # Fix 1062 error
           RESET MASTER;
           SELECT 'master reset executed' mysql_client_setup_image;

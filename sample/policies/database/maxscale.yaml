@@ -44,12 +44,12 @@ services:
       SCONE_NETWORK_SHIELD_SERVER_TCP_CLIENT_AUTH: $$SCONE::MARIADB_CA_CERT$$
 
       SCONE_NETWORK_SHIELD_CLIENT_PRIMARY: protected
-      SCONE_NETWORK_SHIELD_CLIENT_PRIMARY_DESTINATION: "TCP:mariadb-primary:3306"
+      SCONE_NETWORK_SHIELD_CLIENT_PRIMARY_DESTINATION: "TCP:${MARIADB_PRIMARY_SERVICE_NAME}:3306"
       SCONE_NETWORK_SHIELD_CLIENT_PRIMARY_DESTINATION_IP: "*"
       SCONE_NETWORK_SHIELD_CLIENT_PRIMARY_IDENTITY: $$SCONE::maxscale-internal-cert$$$$SCONE::maxscale-internal-cert:privatekey$$
       SCONE_NETWORK_SHIELD_CLIENT_PRIMARY_SERVER_AUTH: $$SCONE::MARIADB_CA_CERT$$
       SCONE_NETWORK_SHIELD_CLIENT_REPLICA: protected
-      SCONE_NETWORK_SHIELD_CLIENT_REPLICA_DESTINATION: "TCP:mariadb-replica:3307"
+      SCONE_NETWORK_SHIELD_CLIENT_REPLICA_DESTINATION: "TCP:${MARIADB_REPLICA_SERVICE_NAME}:3307"
       SCONE_NETWORK_SHIELD_CLIENT_REPLICA_DESTINATION_IP: "*"
       SCONE_NETWORK_SHIELD_CLIENT_REPLICA_IDENTITY: $$SCONE::maxscale-internal-cert$$$$SCONE::maxscale-internal-cert:privatekey$$
       SCONE_NETWORK_SHIELD_CLIENT_REPLICA_SERVER_AUTH: $$SCONE::MARIADB_CA_CERT$$
@@ -92,13 +92,13 @@ images:
 
           [mdb1]
           type=server
-          address=mariadb-primary
+          address=${MARIADB_PRIMARY_SERVICE_NAME}
           port=3306
           protocol=MariaDBBackend
 
           [mdb2]
           type=server
-          address=mariadb-replica
+          address=${MARIADB_REPLICA_SERVICE_NAME}
           port=3307
           protocol=MariaDBBackend
 

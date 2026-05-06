@@ -29,7 +29,7 @@ public class Common {
                     .build())
                 .build(),
             new EnvVarBuilder().withName("SCONE_ETHREAD_SLEEP_TIME_MSEC").withValue("5ms").build(),
-            new EnvVarBuilder().withName("SCONE_ALLOW_DLOPEN").withValue("1").build(),
+            new EnvVarBuilder().withName("SCONE_ALLOW_DLOPEN").withValue("2").build(),
             new EnvVarBuilder().withName("SCONE_MODE").withValue("hw").build(),
             new EnvVarBuilder().withName("SCONE_SYSLIBS").withValue("1").build(),
             new EnvVarBuilder().withName("SCONE_LOG").withValue("error").build()

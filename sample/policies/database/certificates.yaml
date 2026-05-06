@@ -117,8 +117,8 @@ secrets:
     common_name: mysqld
     dns:
       - mysqld
-      - mariadb-primary # we use primary.service.nameOverride, introduced in mariadb-spr v0.2
-      - mariadb-replica # we use replica.service.nameOverride, introduced in mariadb-spr v0.2
+      - ${MARIADB_PRIMARY_SERVICE_NAME}
+      - ${MARIADB_REPLICA_SERVICE_NAME}
       - localhost # for metrics exporter
     export:
       - session: osv-scanner-sample/mariadb-primary
