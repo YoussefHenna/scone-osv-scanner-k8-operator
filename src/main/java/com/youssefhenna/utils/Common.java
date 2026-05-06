@@ -54,6 +54,10 @@ public class Common {
     }
 
     public static Deployment buildDeployment(String name, String namespace, String imagePullSecretName, Container container, int replicas) {
+        return buildDeployment(name, namespace, imagePullSecretName, container, replicas, List.of());
+    }
+
+    public static Deployment buildDeployment(String name, String namespace, String imagePullSecretName, Container container, int replicas, List<Volume> volumes) {
         LocalObjectReference imagePullSecret = new LocalObjectReferenceBuilder()
             .withName(imagePullSecretName)
             .build();
@@ -65,6 +69,7 @@ public class Common {
             .withNewSpec()
             .withImagePullSecrets(imagePullSecret)
             .withContainers(container)
+            .withVolumes(volumes)
             .endSpec()
             .build();
 

@@ -13,7 +13,6 @@ import io.javaoperatorsdk.operator.api.reconciler.Context;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernetesDependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.KubernetesDependent;
 
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -37,8 +36,10 @@ public class MaxscaleDeploymentDependentResource extends CRUDKubernetesDependent
         String imagePullSecretName = dbSpec.getRegistryCredentials().getSecretRef().getName();
 
         String memory = spec.getMemory();
-        List<EnvVar> envVars = new ArrayList<>(Common.buildSconeEnvVars(memory, primarySpec.getCasAddress(), spec.getSconeConfigId()));
+        List<EnvVar> envVars = Common.buildSconeEnvVars(memory, primarySpec.getCasAddress(), spec.getSconeConfigId());
         ResourceRequirements resources = Common.buildSgxResources(memory);
+
+        String sconeVolumeDir = "scone-volume";
 
         Container container = new ContainerBuilder()
             .withName(name + "-container")
@@ -51,8 +52,16 @@ public class MaxscaleDeploymentDependentResource extends CRUDKubernetesDependent
                 new ContainerPortBuilder().withName(Constants.MAXSCALE_PORT_NAME).withContainerPort(Constants.MAXSCALE_PORT).withProtocol("TCP").build(),
                 new ContainerPortBuilder().withName(Constants.MAXSCALE_ADMIN_PORT_NAME).withContainerPort(Constants.MAXSCALE_ADMIN_PORT).withProtocol("TCP").build()
             )
+            .withVolumeMounts(
+                new VolumeMountBuilder().withName(sconeVolumeDir).withMountPath("/protected_do_not_change_encrypted_dir").build()
+            )
             .build();
 
-        return Common.buildDeployment(name, namespace, imagePullSecretName, container, spec.getReplicas());
+        Volume sconeVolume = new VolumeBuilder()
+            .withName(sconeVolumeDir)
+            .withEmptyDir(new EmptyDirVolumeSourceBuilder().build())
+            .build();
+
+        return Common.buildDeployment(name, namespace, imagePullSecretName, container, spec.getReplicas(), List.of(sconeVolume));
     }
 }

@@ -87,8 +87,8 @@ spec:
       secretRef:
         name: scontain-git-secret
     maxscale:
-      imageName: sconecuratedimages/experimental/maxscale
-      imageVersion: 24.02.1-binary-fs-scone5.8.0-291-ga50b0d039-matteus_mariadb-prod
+      imageName: sconecuratedimages/apps
+      imageVersion: maxscale-2.5-alpine
       replicas: 1
       memory: 2G
       sconeConfigId: osv-scanner-sample/mariadb-maxscale/maxscale

@@ -72,7 +72,7 @@ images:
           admin_auth=true
 
           # load only from binary-fs
-          libdir=/usr/lib/x86_64-linux-gnu/maxscale
+          libdir=/usr/local/lib64/maxscale 
 
           # Fixed dir to be configured in the security policy
           # and encrypted used with FSPF. These directories
