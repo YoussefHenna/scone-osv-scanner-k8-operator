@@ -5,6 +5,12 @@ import com.youssefhenna.dependent.FrontAppDeploymentDependentResource;
 import com.youssefhenna.dependent.FrontAppServiceDependentResource;
 import com.youssefhenna.dependent.database.*;
 import com.youssefhenna.model.DependantStatus;
+import com.youssefhenna.model.PollConfig;
+import com.youssefhenna.policy.PolicySync;
+import com.youssefhenna.spec.policy.PolicyUpstreamSpec;
+import com.youssefhenna.status.PolicyUpdateState;
+import com.youssefhenna.status.PolicyUploadStatus;
+import com.youssefhenna.status.PolicyUploadStatusItem;
 import com.youssefhenna.status.SconeOsvScannerStatus;
 import com.youssefhenna.utils.Constants;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
@@ -12,6 +18,9 @@ import io.fabric8.kubernetes.api.model.apps.StatefulSet;
 import io.javaoperatorsdk.operator.api.reconciler.*;
 import io.javaoperatorsdk.operator.api.reconciler.dependent.Dependent;
 
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 
@@ -36,11 +45,40 @@ public class SconeOsvScannerReconciler implements Reconciler<SconeOsvScanner> {
 
     @Override
     public UpdateControl<SconeOsvScanner> reconcile(SconeOsvScanner resource, Context<SconeOsvScanner> context) {
-        resource.setStatus(buildStatus(resource, context));
+        SconeOsvScannerStatus status = buildDependantsStatus(resource, context);
+
+        PolicyUpstreamSpec upstream = resource.getSpec().getPolicyUpstream();
+        if (upstream != null) {
+            PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(upstream, resource.getSpec().getCasAddress(), resource.getSpec().getCasPort());
+            status.setPolicyUploadStatus(buildPolicyUploadStatus(result));
+            resource.setStatus(status);
+            return UpdateControl.patchStatus(resource).rescheduleAfter(toDuration(upstream.getPoll()));
+        }
+
+        resource.setStatus(status);
         return UpdateControl.patchStatus(resource);
     }
 
-    private SconeOsvScannerStatus buildStatus(SconeOsvScanner resource, Context<SconeOsvScanner> context) {
+    private PolicyUploadStatus buildPolicyUploadStatus(PolicySync.SyncPoliciesResult result) {
+        Map<String, PolicyUploadStatusItem> statues = new HashMap<>();
+        for (PolicyUploadStatusItem item : result.statuses()) {
+            statues.put(item.getName(), item);
+        }
+        PolicyUploadStatus uploadStatus = new PolicyUploadStatus();
+        uploadStatus.setLastRunStatus(result.overallStatus());
+        uploadStatus.setPolicyUpdateStatuses(statues);
+        return uploadStatus;
+    }
+
+    private Duration toDuration(PollConfig poll) {
+        return switch (poll.getUnit()) {
+            case DAYS -> Duration.ofDays(poll.getEvery());
+            case HOURS -> Duration.ofHours(poll.getEvery());
+            case MINUTES -> Duration.ofMinutes(poll.getEvery());
+        };
+    }
+
+    private SconeOsvScannerStatus buildDependantsStatus(SconeOsvScanner resource, Context<SconeOsvScanner> context) {
         Set<Deployment> dependantDeployments = context.getSecondaryResources(Deployment.class);
         Set<StatefulSet> dependantStatefulSets = context.getSecondaryResources(StatefulSet.class);
 
