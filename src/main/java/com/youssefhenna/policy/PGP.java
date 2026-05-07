@@ -1,6 +1,6 @@
-package com.youssefhenna.policy_manager;
+package com.youssefhenna.policy;
 
-import com.youssefhenna.policy_manager.model.FileWithSignature;
+import com.youssefhenna.policy.model.FileWithSignature;
 import org.bouncycastle.openpgp.PGPException;
 import org.bouncycastle.openpgp.api.OpenPGPCertificate;
 import org.bouncycastle.util.io.Streams;

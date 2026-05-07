@@ -1,11 +1,12 @@
-package com.youssefhenna.policy_manager;
+package com.youssefhenna.policy;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.youssefhenna.model.PollConfig;
-import com.youssefhenna.policy_manager.model.*;
+import com.youssefhenna.policy.model.*;
 import com.youssefhenna.spec.policy.PolicyUpstreamSpec;
+import com.youssefhenna.status.PolicyUpdateRunStatus;
 import com.youssefhenna.status.PolicyUploadStatusItem;
 import com.youssefhenna.utils.Common;
 import org.bouncycastle.openpgp.PGPException;
@@ -25,9 +26,10 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.util.*;
+import io.quarkus.logging.Log;
 
 
-public class PolicyManager {
+public class PolicySync {
 
     private static final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
 
@@ -35,7 +37,9 @@ public class PolicyManager {
     private static String lastClonedGitBranch = null;
     private static Path lastClonedRepoPath = null;
 
-    public static ArrayList<PolicyUploadStatusItem> syncPolicies(PolicyUpstreamSpec upstream, String casAddress, int casPort) {
+    public record SyncPoliciesResult(PolicyUpdateRunStatus overallStatus, ArrayList<PolicyUploadStatusItem> statuses){}
+
+    public static SyncPoliciesResult syncPolicies(PolicyUpstreamSpec upstream, String casAddress, int casPort) {
         try {
             CASClient casClient = new CASClient(casAddress, casPort);
             ensureLatestRepoContents(upstream.getGitUrl(), upstream.getBranch());
@@ -48,9 +52,11 @@ public class PolicyManager {
 
             //TODO: tests to verify correct behavior, use pgp lib for generating keys, provide mocked local available repo
             //TODO: add logs with  io.quarkus.logging.Log
-            return SPOLUpload.uploadAll(casClient, verifiedSpolFiles);
+            ArrayList<PolicyUploadStatusItem> statuses = SPOLUpload.uploadAll(casClient, verifiedSpolFiles);
+            return new SyncPoliciesResult(PolicyUpdateRunStatus.SUCCESSFUL, statuses);
         } catch (Exception e) {
-            throw new RuntimeException("Unknown error while syncing policies", e);
+            Log.error("Error while syncing policies", e);
+            return new SyncPoliciesResult(PolicyUpdateRunStatus.FAILED, new ArrayList<>());
         }
     }
 
@@ -99,6 +105,7 @@ public class PolicyManager {
                         String baseName = fileName.substring(dashIndex + 1);
                         Path signatureFile = file.resolveSibling(fileName + ".asc");
                         if (!Files.exists(signatureFile)) {
+                            Log.warn("No signature file found for '" +fileName+ "', skipping...");
                             return FileVisitResult.CONTINUE;
                         }
                         Integer currentHighest = highestVersions.get(baseName);
@@ -162,9 +169,14 @@ public class PolicyManager {
                 if (valid) {
                     authorizedGpgKeys.addAll(gpgAuthDefinition.getSigners());
                 }
+            } else {
+                Log.warn("GPG file '"+file.baseName()+"' has an invalid signature, skipping...");
             }
         }
 
+        if(authorizedGpgKeys.isEmpty()){
+            Log.warn("No authorized GPG keys found in git repo that match given root GPG keys, no policies will be updated");
+        }
         return authorizedGpgKeys;
     }
 
@@ -200,7 +212,6 @@ public class PolicyManager {
 
         return verifiedSPOLS;
     }
-
 
 
 
@@ -270,10 +281,9 @@ public class PolicyManager {
         config.setUnit(PollConfig.Unit.MINUTES);
         spec.setPoll(config);
 
-        ArrayList<PolicyUploadStatusItem> res = syncPolicies(spec, "scone-cas.cf", 8081);
-        for(PolicyUploadStatusItem item: res){
-            System.out.println(yamlMapper.writeValueAsString(item));
-        }
+        SyncPoliciesResult res = syncPolicies(spec, "scone-cas.cf", 8081);
+        System.out.println(yamlMapper.writeValueAsString(res));
+
     }
 
 }

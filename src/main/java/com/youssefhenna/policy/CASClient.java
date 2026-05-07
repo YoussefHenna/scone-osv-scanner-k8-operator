@@ -1,9 +1,9 @@
-package com.youssefhenna.policy_manager;
+package com.youssefhenna.policy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.youssefhenna.policy_manager.model.http.ReadSessionResponse;
-import com.youssefhenna.policy_manager.model.SPOLDefinition;
-import com.youssefhenna.policy_manager.model.http.UploadSessionResponse;
+import com.youssefhenna.policy.model.http.ReadSessionResponse;
+import com.youssefhenna.policy.model.SPOLDefinition;
+import com.youssefhenna.policy.model.http.UploadSessionResponse;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;

@@ -1,4 +1,4 @@
-package com.youssefhenna.policy_manager.model.http;
+package com.youssefhenna.policy.model.http;
 
 
 public class ReadSessionResponse {

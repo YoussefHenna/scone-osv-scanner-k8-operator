@@ -1,4 +1,4 @@
-package com.youssefhenna.policy_manager.model;
+package com.youssefhenna.policy.model;
 
 
 public class SessionSigner {

@@ -1,6 +1,4 @@
-package com.youssefhenna.policy_manager.model.http;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
+package com.youssefhenna.policy.model.http;
 
 import java.util.ArrayList;
 
