@@ -5,6 +5,7 @@ import com.youssefhenna.dependent.FrontAppDeploymentDependentResource;
 import com.youssefhenna.dependent.FrontAppServiceDependentResource;
 import com.youssefhenna.dependent.database.*;
 import com.youssefhenna.model.DependantStatus;
+import com.youssefhenna.status.SconeOsvScannerStatus;
 import com.youssefhenna.utils.Constants;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.StatefulSet;

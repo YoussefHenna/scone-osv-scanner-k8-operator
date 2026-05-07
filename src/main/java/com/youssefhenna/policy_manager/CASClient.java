@@ -1,0 +1,98 @@
+package com.youssefhenna.policy_manager;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.youssefhenna.policy_manager.model.http.ReadSessionResponse;
+import com.youssefhenna.policy_manager.model.SPOLDefinition;
+import com.youssefhenna.policy_manager.model.http.UploadSessionResponse;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
+
+
+public class CASClient {
+    private final String casAddress;
+    private final int casPort;
+    private final HttpClient httpClient;
+    private final ObjectMapper objectMapper;
+
+    public CASClient(String casAddress, int casPort) {
+        this.casAddress = casAddress;
+        this.casPort = casPort;
+        this.httpClient = HttpClient.newBuilder()
+                .sslContext(trustAllSslContext())
+                .build();
+        this.objectMapper = new ObjectMapper();
+    }
+
+    // TODO: replace with actual CAS certificate validation
+    private static SSLContext trustAllSslContext() {
+        try {
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, new TrustManager[]{new X509TrustManager() {
+                public void checkClientTrusted(X509Certificate[] chain, String authType) {}
+                public void checkServerTrusted(X509Certificate[] chain, String authType) {}
+                public X509Certificate[] getAcceptedIssuers() { return new X509Certificate[0]; }
+            }}, null);
+            return sslContext;
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+            throw new RuntimeException("Failed to create trust-all SSL context", e);
+        }
+    }
+
+    public static class CASClientException extends Exception {
+        private final int statusCode;
+
+        public CASClientException(int statusCode, String body) {
+            super("CAS request failed with status " + statusCode + ": " + body);
+            this.statusCode = statusCode;
+        }
+
+        public int getStatusCode() {
+            return statusCode;
+        }
+    }
+
+    private  <T> T get(String path, Class<T> responseType) throws IOException, InterruptedException, CASClientException {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("https://" + casAddress + ":" + casPort + path))
+                .GET()
+                .build();
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() < 200 || response.statusCode() >= 300) {
+            throw new CASClientException(response.statusCode(), response.body());
+        }
+        return objectMapper.readValue(response.body(), responseType);
+    }
+
+    private  <T> T put(String path, Object body, Class<T> responseType) throws IOException, InterruptedException, CASClientException {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("https://" + casAddress + ":" + casPort + path))
+                .header("Content-Type", "application/json")
+                .PUT(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(body)))
+                .build();
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() < 200 || response.statusCode() >= 300) {
+            throw new CASClientException(response.statusCode(), response.body());
+        }
+        return objectMapper.readValue(response.body(), responseType);
+    }
+
+
+    public ReadSessionResponse readSession(String name) throws IOException, InterruptedException, CASClientException {
+        return this.get("/v1/sessions" + name, ReadSessionResponse.class);
+    }
+
+    public UploadSessionResponse uploadSession(SPOLDefinition body) throws IOException, InterruptedException, CASClientException {
+        return this.put("/v1/signed_sessions", body, UploadSessionResponse.class);
+    }
+
+}

@@ -1,12 +1,13 @@
 package com.youssefhenna.policy_manager;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.youssefhenna.model.PollConfig;
-import com.youssefhenna.policy_manager.model.FileWithSignature;
-import com.youssefhenna.policy_manager.model.GPGAuthorizationSignedDefinition;
-import com.youssefhenna.policy_manager.model.SPOLSignedDefinition;
+import com.youssefhenna.policy_manager.model.*;
 import com.youssefhenna.spec.policy.PolicyUpstreamSpec;
+import com.youssefhenna.status.PolicyUploadStatusItem;
+import com.youssefhenna.utils.Common;
 import org.bouncycastle.openpgp.PGPException;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
@@ -23,17 +24,20 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
+
 public class PolicyManager {
+
+    private static final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
 
     private static String lastClonedGitUrl = null;
     private static String lastClonedGitBranch = null;
     private static Path lastClonedRepoPath = null;
 
-    public static void syncPolicies(PolicyUpstreamSpec upstream) {
+    public static ArrayList<PolicyUploadStatusItem> syncPolicies(PolicyUpstreamSpec upstream, String casAddress, int casPort) {
         try {
+            CASClient casClient = new CASClient(casAddress, casPort);
             ensureLatestRepoContents(upstream.getGitUrl(), upstream.getBranch());
 
             ArrayList<FileWithSignature> spolFiles = findHighestVersionSPOLS();
@@ -42,9 +46,9 @@ public class PolicyManager {
             ArrayList<String> authorizedGpgKeys = extractAuthorizedGpgKeys(gpgKeyAuthorizationFiles, upstream.getGpgKeys(), upstream.getGitUrl());
             ArrayList<FileWithSignature> verifiedSpolFiles = filterVerifiedSPOLS(spolFiles, authorizedGpgKeys, upstream.getGitUrl());
 
-            //TODO: List of verified SPOLS, proceed to CAS submission
             //TODO: tests to verify correct behavior, use pgp lib for generating keys, provide mocked local available repo
-
+            //TODO: add logs with  io.quarkus.logging.Log
+            return SPOLUpload.uploadAll(casClient, verifiedSpolFiles);
         } catch (Exception e) {
             throw new RuntimeException("Unknown error while syncing policies", e);
         }
@@ -140,23 +144,22 @@ public class PolicyManager {
     private static ArrayList<String> extractAuthorizedGpgKeys(ArrayList<FileWithSignature> gpgKeyAuthorizationFiles, ArrayList<String> rootTrustedGpgKeys, String gitUrl) throws PGPException, IOException, ParseException {
         ArrayList<String> authorizedGpgKeys = new ArrayList<>();
 
-        for(FileWithSignature file: gpgKeyAuthorizationFiles){
+        for (FileWithSignature file : gpgKeyAuthorizationFiles) {
             PGP.SignatureVerificationResult verificationResult = PGP.verifyTrustedFileSignature(file, rootTrustedGpgKeys);
-            if(verificationResult.isVerified()){
-                ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-                GPGAuthorizationSignedDefinition gpgAuthDefinition = mapper.readValue(verificationResult.signedContent(), GPGAuthorizationSignedDefinition.class);
+            if (verificationResult.isVerified()) {
+                GPGAuthorizationSignedDefinition gpgAuthDefinition = yamlMapper.readValue(verificationResult.signedContent(), GPGAuthorizationSignedDefinition.class);
 
-                if(!gpgAuthDefinition.getRepo().equals(gitUrl)){
+                if (!gpgAuthDefinition.getRepo().equals(gitUrl)) {
                     continue;
                 }
 
-                Date notBefore = parseDate(gpgAuthDefinition.getValidity().getNotBefore());
-                Date notAfter = parseDate(gpgAuthDefinition.getValidity().getNotAfter());
+                Date notBefore = Common.parseDate(gpgAuthDefinition.getValidity().getNotBefore());
+                Date notAfter = Common.parseDate(gpgAuthDefinition.getValidity().getNotAfter());
 
                 Date now = new Date();
                 boolean valid = now.after(notBefore) && now.before(notAfter);
 
-                if(valid){
+                if (valid) {
                     authorizedGpgKeys.addAll(gpgAuthDefinition.getSigners());
                 }
             }
@@ -169,25 +172,24 @@ public class PolicyManager {
         ArrayList<FileWithSignature> verifiedSPOLS = new ArrayList<>();
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
 
-        for(FileWithSignature file: spols){
+        for (FileWithSignature file : spols) {
             PGP.SignatureVerificationResult verificationResult = PGP.verifyTrustedFileSignature(file, gpgKeys);
-            if(verificationResult.isVerified()){
-                ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-                SPOLSignedDefinition spolSignedDefinition = mapper.readValue(verificationResult.signedContent(), SPOLSignedDefinition.class);
+            if (verificationResult.isVerified()) {
+                SPOLSignedDefinition spolSignedDefinition = yamlMapper.readValue(verificationResult.signedContent(), SPOLSignedDefinition.class);
 
-                if(!spolSignedDefinition.getRepo().equals(gitUrl)){
+                if (!spolSignedDefinition.getRepo().equals(gitUrl)) {
                     continue;
                 }
 
-                if(file.filePath() != null) {
-                    if(!spolSignedDefinition.getFilename().equals(file.filePath().getFileName().toString())){
+                if (file.filePath() != null) {
+                    if (!spolSignedDefinition.getFilename().equals(file.filePath().getFileName().toString())) {
                         continue;
                     }
 
                     byte[] fileHash = digest.digest(Files.readAllBytes(file.filePath()));
                     String fileHashHex = HexFormat.of().formatHex(fileHash);
 
-                    if(!spolSignedDefinition.getSha256().equals(fileHashHex)){
+                    if (!spolSignedDefinition.getSha256().equals(fileHashHex)) {
                         continue;
                     }
 
@@ -200,14 +202,9 @@ public class PolicyManager {
     }
 
 
-    private static Date parseDate(String dateString) throws ParseException {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss'Z'");
-        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-        return sdf.parse(dateString);
-    }
 
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws JsonProcessingException {
         PolicyUpstreamSpec spec = new PolicyUpstreamSpec();
         spec.setBranch("main");
         spec.setGitUrl("https://github.com/YoussefHenna/scone-osv-scanner-policies");
@@ -273,7 +270,10 @@ public class PolicyManager {
         config.setUnit(PollConfig.Unit.MINUTES);
         spec.setPoll(config);
 
-        syncPolicies(spec);
+        ArrayList<PolicyUploadStatusItem> res = syncPolicies(spec, "scone-cas.cf", 8081);
+        for(PolicyUploadStatusItem item: res){
+            System.out.println(yamlMapper.writeValueAsString(item));
+        }
     }
 
 }

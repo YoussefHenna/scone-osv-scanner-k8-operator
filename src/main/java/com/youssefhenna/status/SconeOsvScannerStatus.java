@@ -1,4 +1,4 @@
-package com.youssefhenna;
+package com.youssefhenna.status;
 
 import com.youssefhenna.model.DependantStatus;
 
@@ -9,6 +9,7 @@ public class SconeOsvScannerStatus {
     private DependantStatus maxscaleStatus;
     private DependantStatus mariadbPrimaryStatus;
     private DependantStatus mariadbReplicaStatus;
+    private PolicyUploadStatus policyUploadStatus;
 
     public DependantStatus getDbManagerStatus() {
         return dbManagerStatus;
@@ -48,5 +49,13 @@ public class SconeOsvScannerStatus {
 
     public void setMariadbReplicaStatus(DependantStatus mariadbReplicaStatus) {
         this.mariadbReplicaStatus = mariadbReplicaStatus;
+    }
+
+    public PolicyUploadStatus getPolicyUploadStatus() {
+        return policyUploadStatus;
+    }
+
+    public void setPolicyUploadStatus(PolicyUploadStatus policyUploadStatus) {
+        this.policyUploadStatus = policyUploadStatus;
     }
 }

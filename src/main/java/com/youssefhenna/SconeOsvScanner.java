@@ -1,6 +1,7 @@
 package com.youssefhenna;
 
 import com.youssefhenna.spec.SconeOsvScannerSpec;
+import com.youssefhenna.status.SconeOsvScannerStatus;
 import io.fabric8.kubernetes.api.model.Namespaced;
 import io.fabric8.kubernetes.client.CustomResource;
 import io.fabric8.kubernetes.model.annotation.Group;

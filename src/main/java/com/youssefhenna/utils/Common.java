@@ -6,10 +6,9 @@ import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.api.model.apps.DeploymentSpec;
 import io.fabric8.kubernetes.api.model.apps.DeploymentSpecBuilder;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 public class Common {
 
@@ -93,5 +92,18 @@ public class Common {
             .withMetadata(metadata)
             .withSpec(deploymentSpec)
             .build();
+    }
+
+
+    public static Date parseDate(String dateString) throws ParseException {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss'Z'");
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return sdf.parse(dateString);
+    }
+
+    public static String dateToString(Date date)  {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss'Z'");
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return sdf.format(date);
     }
 }

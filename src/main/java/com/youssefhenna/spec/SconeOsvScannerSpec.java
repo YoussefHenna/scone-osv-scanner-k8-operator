@@ -9,6 +9,8 @@ public class SconeOsvScannerSpec {
     @Required
     private String casAddress;
 
+    private int casPort = 8081;
+
     @Required
     private ScannerSpec scanner;
 
@@ -23,6 +25,14 @@ public class SconeOsvScannerSpec {
 
     public void setCasAddress(String casAddress) {
         this.casAddress = casAddress;
+    }
+
+    public int getCasPort() {
+        return casPort;
+    }
+
+    public void setCasPort(int casPort) {
+        this.casPort = casPort;
     }
 
     public ScannerSpec getScanner() {
