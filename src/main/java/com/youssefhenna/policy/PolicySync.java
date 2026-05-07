@@ -50,8 +50,6 @@ public class PolicySync {
             ArrayList<String> authorizedGpgKeys = extractAuthorizedGpgKeys(gpgKeyAuthorizationFiles, upstream.getGpgKeys(), upstream.getGitUrl());
             ArrayList<FileWithSignature> verifiedSpolFiles = filterVerifiedSPOLS(spolFiles, authorizedGpgKeys, upstream.getGitUrl());
 
-            //TODO: tests to verify correct behavior, use pgp lib for generating keys, provide mocked local available repo
-            //TODO: add logs with  io.quarkus.logging.Log
             ArrayList<PolicyUploadStatusItem> statuses = SPOLUpload.uploadAll(casClient, verifiedSpolFiles);
             return new SyncPoliciesResult(PolicyUpdateRunStatus.SUCCESSFUL, statuses);
         } catch (Exception e) {
