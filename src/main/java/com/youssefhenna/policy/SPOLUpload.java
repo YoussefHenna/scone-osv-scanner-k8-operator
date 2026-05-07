@@ -3,6 +3,7 @@ package com.youssefhenna.policy;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.youssefhenna.policy.cas.CASClient;
 import com.youssefhenna.policy.model.FileWithSignature;
 import com.youssefhenna.policy.model.SPOLDefinition;
 import com.youssefhenna.policy.model.SessionContents;

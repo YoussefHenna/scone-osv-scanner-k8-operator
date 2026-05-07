@@ -1,8 +1,8 @@
-package com.youssefhenna.policy;
+package com.youssefhenna.policy.cas;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.youssefhenna.policy.model.http.ReadSessionResponse;
 import com.youssefhenna.policy.model.SPOLDefinition;
+import com.youssefhenna.policy.model.http.ReadSessionResponse;
 import com.youssefhenna.policy.model.http.UploadSessionResponse;
 
 import javax.net.ssl.SSLContext;
@@ -18,13 +18,13 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
 
 
-public class CASClient {
+public class HttpCASClient implements CASClient {
     private final String casAddress;
     private final int casPort;
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
 
-    public CASClient(String casAddress, int casPort) {
+    public HttpCASClient(String casAddress, int casPort) {
         this.casAddress = casAddress;
         this.casPort = casPort;
         this.httpClient = HttpClient.newBuilder()
@@ -48,20 +48,7 @@ public class CASClient {
         }
     }
 
-    public static class CASClientException extends Exception {
-        private final int statusCode;
-
-        public CASClientException(int statusCode, String body) {
-            super("CAS request failed with status " + statusCode + ": " + body);
-            this.statusCode = statusCode;
-        }
-
-        public int getStatusCode() {
-            return statusCode;
-        }
-    }
-
-    private  <T> T get(String path, Class<T> responseType) throws IOException, InterruptedException, CASClientException {
+    private <T> T get(String path, Class<T> responseType) throws IOException, InterruptedException, CASClientException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("https://" + casAddress + ":" + casPort + path))
                 .GET()
@@ -73,7 +60,7 @@ public class CASClient {
         return objectMapper.readValue(response.body(), responseType);
     }
 
-    private  <T> T put(String path, Object body, Class<T> responseType) throws IOException, InterruptedException, CASClientException {
+    private <T> T put(String path, Object body, Class<T> responseType) throws IOException, InterruptedException, CASClientException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("https://" + casAddress + ":" + casPort + path))
                 .header("Content-Type", "application/json")
@@ -86,13 +73,13 @@ public class CASClient {
         return objectMapper.readValue(response.body(), responseType);
     }
 
-
+    @Override
     public ReadSessionResponse readSession(String name) throws IOException, InterruptedException, CASClientException {
         return this.get("/v1/sessions" + name, ReadSessionResponse.class);
     }
 
+    @Override
     public UploadSessionResponse uploadSession(SPOLDefinition body) throws IOException, InterruptedException, CASClientException {
         return this.put("/v1/signed_sessions", body, UploadSessionResponse.class);
     }
-
 }

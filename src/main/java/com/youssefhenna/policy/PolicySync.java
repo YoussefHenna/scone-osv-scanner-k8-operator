@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.youssefhenna.model.PollConfig;
+import com.youssefhenna.policy.cas.CASClient;
 import com.youssefhenna.policy.model.*;
 import com.youssefhenna.spec.policy.PolicyUpstreamSpec;
 import com.youssefhenna.status.PolicyUpdateRunStatus;
@@ -39,9 +40,8 @@ public class PolicySync {
 
     public record SyncPoliciesResult(PolicyUpdateRunStatus overallStatus, ArrayList<PolicyUploadStatusItem> statuses){}
 
-    public static SyncPoliciesResult syncPolicies(PolicyUpstreamSpec upstream, String casAddress, int casPort) {
+    public static SyncPoliciesResult syncPolicies(PolicyUpstreamSpec upstream, CASClient casClient) {
         try {
-            CASClient casClient = new CASClient(casAddress, casPort);
             ensureLatestRepoContents(upstream.getGitUrl(), upstream.getBranch());
 
             ArrayList<FileWithSignature> spolFiles = findHighestVersionSPOLS();

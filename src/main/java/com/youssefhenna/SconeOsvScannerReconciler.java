@@ -7,8 +7,8 @@ import com.youssefhenna.dependent.database.*;
 import com.youssefhenna.model.DependantStatus;
 import com.youssefhenna.model.PollConfig;
 import com.youssefhenna.policy.PolicySync;
+import com.youssefhenna.policy.cas.HttpCASClient;
 import com.youssefhenna.spec.policy.PolicyUpstreamSpec;
-import com.youssefhenna.status.PolicyUpdateState;
 import com.youssefhenna.status.PolicyUploadStatus;
 import com.youssefhenna.status.PolicyUploadStatusItem;
 import com.youssefhenna.status.SconeOsvScannerStatus;
@@ -43,13 +43,17 @@ import java.util.Set;
 @ControllerConfiguration()
 public class SconeOsvScannerReconciler implements Reconciler<SconeOsvScanner> {
 
+
     @Override
     public UpdateControl<SconeOsvScanner> reconcile(SconeOsvScanner resource, Context<SconeOsvScanner> context) {
         SconeOsvScannerStatus status = buildDependantsStatus(resource, context);
 
         PolicyUpstreamSpec upstream = resource.getSpec().getPolicyUpstream();
         if (upstream != null) {
-            PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(upstream, resource.getSpec().getCasAddress(), resource.getSpec().getCasPort());
+            PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(
+                upstream,
+                new HttpCASClient(resource.getSpec().getCasAddress(), resource.getSpec().getCasPort())
+            );
             status.setPolicyUploadStatus(buildPolicyUploadStatus(result));
             resource.setStatus(status);
             return UpdateControl.patchStatus(resource).rescheduleAfter(toDuration(upstream.getPoll()));
