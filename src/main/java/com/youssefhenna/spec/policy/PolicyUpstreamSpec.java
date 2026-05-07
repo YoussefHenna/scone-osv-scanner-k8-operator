@@ -7,6 +7,7 @@ import java.util.ArrayList;
 
 public class PolicyUpstreamSpec {
 
+    //TODO: Accept a token for private repos
     @Required
     private String gitUrl;
 
