@@ -12,13 +12,16 @@ import com.youssefhenna.spec.policy.PolicyUpstreamSpec;
 import com.youssefhenna.status.PolicyUploadStatus;
 import com.youssefhenna.status.PolicyUploadStatusItem;
 import com.youssefhenna.status.SconeOsvScannerStatus;
+import com.youssefhenna.utils.Common;
 import com.youssefhenna.utils.Constants;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.StatefulSet;
 import io.javaoperatorsdk.operator.api.reconciler.*;
 import io.javaoperatorsdk.operator.api.reconciler.dependent.Dependent;
 
+import java.text.ParseException;
 import java.time.Duration;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -50,11 +53,7 @@ public class SconeOsvScannerReconciler implements Reconciler<SconeOsvScanner> {
 
         PolicyUpstreamSpec upstream = resource.getSpec().getPolicyUpstream();
         if (upstream != null) {
-            PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(
-                upstream,
-                new HttpCASClient(resource.getSpec().getCasAddress(), resource.getSpec().getCasPort())
-            );
-            status.setPolicyUploadStatus(buildPolicyUploadStatus(result));
+            status.setPolicyUploadStatus(resolvePolicyUploadStatus(resource, upstream));
             resource.setStatus(status);
             return UpdateControl.patchStatus(resource).rescheduleAfter(toDuration(upstream.getPoll()));
         }
@@ -63,7 +62,34 @@ public class SconeOsvScannerReconciler implements Reconciler<SconeOsvScanner> {
         return UpdateControl.patchStatus(resource);
     }
 
-    private PolicyUploadStatus buildPolicyUploadStatus(PolicySync.SyncPoliciesResult result) {
+    private PolicyUploadStatus resolvePolicyUploadStatus(SconeOsvScanner resource, PolicyUpstreamSpec upstream) {
+        PolicyUploadStatus existingUploadStatus = resource.getStatus() != null
+            ? resource.getStatus().getPolicyUploadStatus()
+            : null;
+
+        Duration pollDuration = toDuration(upstream.getPoll());
+        boolean shouldSync = true;
+        if (existingUploadStatus != null && existingUploadStatus.getLastSyncTime() != null) {
+            try {
+                Date lastSync = Common.parseDate(existingUploadStatus.getLastSyncTime());
+                Date nextSync = new Date(lastSync.getTime() + pollDuration.toMillis());
+                shouldSync = new Date().after(nextSync) || !upstream.equals(existingUploadStatus.getLastSyncedUpstream());
+            } catch (ParseException ignored) {
+            }
+        }
+
+        if (!shouldSync) {
+            return existingUploadStatus;
+        }
+
+        PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(
+            upstream,
+            new HttpCASClient(resource.getSpec().getCasAddress(), resource.getSpec().getCasPort())
+        );
+        return buildPolicyUploadStatus(upstream, result);
+    }
+
+    private PolicyUploadStatus buildPolicyUploadStatus(PolicyUpstreamSpec upstream, PolicySync.SyncPoliciesResult result) {
         Map<String, PolicyUploadStatusItem> statues = new HashMap<>();
         for (PolicyUploadStatusItem item : result.statuses()) {
             statues.put(item.getName(), item);
@@ -71,6 +97,8 @@ public class SconeOsvScannerReconciler implements Reconciler<SconeOsvScanner> {
         PolicyUploadStatus uploadStatus = new PolicyUploadStatus();
         uploadStatus.setLastRunStatus(result.overallStatus());
         uploadStatus.setPolicyUpdateStatuses(statues);
+        uploadStatus.setLastSyncTime(Common.dateToString(new Date()));
+        uploadStatus.setLastSyncedUpstream(upstream);
         return uploadStatus;
     }
 

@@ -53,7 +53,7 @@ public class PolicySync {
             ArrayList<PolicyUploadStatusItem> statuses = SPOLUpload.uploadAll(casClient, verifiedSpolFiles);
             return new SyncPoliciesResult(PolicyUpdateRunStatus.SUCCESSFUL, statuses);
         } catch (Exception e) {
-            Log.error("Error while syncing policies", e);
+            Log.error("Error while syncing policies ->" + e.getMessage());
             return new SyncPoliciesResult(PolicyUpdateRunStatus.FAILED, new ArrayList<>());
         }
     }

@@ -57,7 +57,7 @@ public class SPOLUpload {
             statusItem.setName(parsedSessionContents.getName());
             return spolDefinition;
         } catch (IOException e) {
-            Log.error("SPOL '" + spol.baseName() + "' parsing failed. Invalid SPOL file", e);
+            Log.error("SPOL '" + spol.baseName() + "' parsing failed. Invalid SPOL file ->" + e.getMessage());
             statusItem.setLastState(PolicyUpdateState.FAILED_INVALID_SPOL);
             return null;
         }
@@ -73,18 +73,18 @@ public class SPOLUpload {
             if (e.getStatusCode() == 404) {
                 return null;
             } else if (e.getStatusCode() == 403) {
-                Log.error("Session '" + statusItem.getName() + "' could not be read from CAS, forbidden.",e);
+                Log.error("Session '" + statusItem.getName() + "' could not be read from CAS, forbidden. ->" + e.getMessage());
                 statusItem.setLastState(PolicyUpdateState.FAILED_READ_EXISTING_FORBIDDEN);
             } else if (e.getStatusCode() >= 500) {
-                Log.error("Session '" + statusItem.getName() + "' could not be read from CAS, CAS error.",e);
+                Log.error("Session '" + statusItem.getName() + "' could not be read from CAS, CAS error. ->" + e.getMessage());
                 statusItem.setLastState(PolicyUpdateState.FAILED_UNKNOWN_CAS_ERROR);
             } else {
-                Log.error("Session '" + statusItem.getName() + "' could not be read from CAS, unknown error.",e);
+                Log.error("Session '" + statusItem.getName() + "' could not be read from CAS, unknown error ->" + e.getMessage());
                 statusItem.setLastState(PolicyUpdateState.FAILED_UNKNOWN_READ_EXISTING_FAILURE);
             }
             return null;
         } catch (Exception e) {
-            Log.error("Session '" + statusItem.getName() + "' could not be read from CAS, unknown error.",e);
+            Log.error("Session '" + statusItem.getName() + "' could not be read from CAS, unknown error. ->" + e.getMessage());
             statusItem.setLastState(PolicyUpdateState.FAILED_UNKNOWN_READ_EXISTING_FAILURE);
             return null;
         }
@@ -102,7 +102,7 @@ public class SPOLUpload {
             }
             return false;
         } catch (IOException e) {
-            Log.error("CAS session and current session failed comparison",e);
+            Log.error("CAS session and current session failed comparison ->" + e.getMessage());
             statusItem.setLastState(PolicyUpdateState.FAILED_SESSION_COMPARISON_FAILURE);
             return false;
         }
@@ -127,26 +127,26 @@ public class SPOLUpload {
             statusItem.setLastState(PolicyUpdateState.SUCCESS_UPLOADED);
         } catch (CASClient.CASClientException e) {
             if (e.getStatusCode() == 404) {
-                Log.error("Session '" + statusItem.getName() + "' could not be uploaded, namespace not found.",e);
+                Log.error("Session '" + statusItem.getName() + "' could not be uploaded, namespace not found. ->" + e.getMessage());
                 statusItem.setLastState(PolicyUpdateState.FAILED_NAMESPACE_NOT_FOUND);
             } else if (e.getStatusCode() == 403) {
-                Log.error("Session '" + statusItem.getName() + "' could not be uploaded, signer not authorized.",e);
+                Log.error("Session '" + statusItem.getName() + "' could not be uploaded, signer not authorized. ->" + e.getMessage());
                 statusItem.setLastState(PolicyUpdateState.FAILED_SIGNER_NOT_AUTHORIZED);
             } else if (e.getStatusCode() == 400) {
-                Log.error("Session '" + statusItem.getName() + "' could not be uploaded, invalid SPOL.",e);
+                Log.error("Session '" + statusItem.getName() + "' could not be uploaded, invalid SPOL. ->" + e.getMessage());
                 statusItem.setLastState(PolicyUpdateState.FAILED_INVALID_SPOL);
             } else if (e.getStatusCode() == 409) {
-                Log.error("Session '" + statusItem.getName() + "' could not be uploaded, predecessor conflict.",e);
+                Log.error("Session '" + statusItem.getName() + "' could not be uploaded, predecessor conflict. ->" + e.getMessage());
                 statusItem.setLastState(PolicyUpdateState.FAILED_PREDECESSOR_CONFLICT);
             } else if (e.getStatusCode() >= 500) {
-                Log.error("Session '" + statusItem.getName() + "' could not be uploaded, CAS error.",e);
+                Log.error("Session '" + statusItem.getName() + "' could not be uploaded, CAS error. ->" + e.getMessage());
                 statusItem.setLastState(PolicyUpdateState.FAILED_UNKNOWN_CAS_ERROR);
             } else {
-                Log.error("Session '" + statusItem.getName() + "' could not be uploaded, unknown error.",e);
+                Log.error("Session '" + statusItem.getName() + "' could not be uploaded, unknown error. ->" + e.getMessage());
                 statusItem.setLastState(PolicyUpdateState.FAILED_UNKNOWN_UPLOAD_SESSION_FAILURE);
             }
         } catch (Exception e) {
-            Log.error("Session '" + statusItem.getName() + "' could not be uploaded, unknown error.",e);
+            Log.error("Session '" + statusItem.getName() + "' could not be uploaded, unknown error. ->" + e.getMessage());
             statusItem.setLastState(PolicyUpdateState.FAILED_UNKNOWN_UPLOAD_SESSION_FAILURE);
         }
     }

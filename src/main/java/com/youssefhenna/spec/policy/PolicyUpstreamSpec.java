@@ -4,10 +4,11 @@ import com.youssefhenna.model.PollConfig;
 import io.fabric8.generator.annotation.Required;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class PolicyUpstreamSpec {
 
-    //TODO: Accept a token for private repos
+    //TODO: Accept a token (as secret ref) for private repos
     @Required
     private String gitUrl;
 
@@ -50,5 +51,19 @@ public class PolicyUpstreamSpec {
 
     public void setPoll(PollConfig poll) {
         this.poll = poll;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof PolicyUpstreamSpec other)) return false;
+        return Objects.equals(gitUrl, other.gitUrl)
+            && Objects.equals(branch, other.branch)
+            && Objects.equals(gpgKeys, other.gpgKeys);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(gitUrl, branch, gpgKeys);
     }
 }

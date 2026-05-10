@@ -10,6 +10,8 @@ public class PolicyUploadStatusItem {
     private PolicyUpdateState lastState;
     private String lastFile;
 
+    public PolicyUploadStatusItem() {}
+
     public PolicyUploadStatusItem(String name, String lastFile) {
         this.name = name;
         this.lastFile = lastFile;
