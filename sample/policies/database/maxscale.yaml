@@ -124,8 +124,7 @@ images:
           servers=mdb1,mdb2
           user=root
           password=$$SCONE::MYSQL_ROOT_PASSWORD:hex$$
-          transaction_replay=true
-          #transaction_replay_timeout=30s
+          transaction_replay=false
           causal_reads=global
 
           [Splitter-Listener]

@@ -26,10 +26,6 @@ public class FrontAppServiceDependentResource extends CRUDKubernetesDependentRes
         ObjectMeta metadata = new ObjectMetaBuilder()
             .withName(name)
             .withNamespace(namespace)
-            .withAnnotations(Map.of(
-                "service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path", "/health",
-                "service.beta.kubernetes.io/azure-load-balancer-health-probe-protocol", "https"
-            ))
             .addToLabels(Constants.DEPENDANT_LABEL_KEY, Constants.DEPENDANT_LABEL_VALUE)
             .build();
 

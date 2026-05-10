@@ -40,11 +40,9 @@ public class FrontAppDeploymentDependentResource extends CRUDKubernetesDependent
         ResourceRequirements resources = Common.buildSgxResources(memory);
 
         Probe livenessProbe = new ProbeBuilder()
-            .withHttpGet(new HTTPGetActionBuilder()
-                .withPath("/health")
+            .withNewTcpSocket()
                 .withPort(new IntOrString(Constants.FRONT_APP_PORT))
-                .withScheme("HTTPS")
-                .build())
+            .endTcpSocket()
             .withInitialDelaySeconds(30)
             .withPeriodSeconds(60)
             .withTimeoutSeconds(5)
@@ -52,11 +50,9 @@ public class FrontAppDeploymentDependentResource extends CRUDKubernetesDependent
             .build();
 
         Probe readinessProbe = new ProbeBuilder()
-            .withHttpGet(new HTTPGetActionBuilder()
-                .withPath("/health")
+            .withNewTcpSocket()
                 .withPort(new IntOrString(Constants.FRONT_APP_PORT))
-                .withScheme("HTTPS")
-                .build())
+            .endTcpSocket()
             .withInitialDelaySeconds(10)
             .withPeriodSeconds(30)
             .withTimeoutSeconds(3)
