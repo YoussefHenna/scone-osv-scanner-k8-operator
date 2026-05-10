@@ -38,10 +38,9 @@ services:
       SCONE_NETWORK_SHIELD_SERVER_ADM_IDENTITY: $$SCONE::maxscale-internal-cert$$$$SCONE::maxscale-internal-cert:privatekey$$
       SCONE_NETWORK_SHIELD_SERVER_ADM_CLIENT_AUTH: $$SCONE::MARIADB_CA_CERT$$
 
-      SCONE_NETWORK_SHIELD_SERVER_TCP: protected
+      # OSV Scanner needs TLS handshake on MySQL protocol, cannot work through shield
+      SCONE_NETWORK_SHIELD_SERVER_TCP: unprotected
       SCONE_NETWORK_SHIELD_SERVER_TCP_PORT: TCP:3306
-      SCONE_NETWORK_SHIELD_SERVER_TCP_IDENTITY: $$SCONE::maxscale-frontend-cert$$$$SCONE::maxscale-frontend-cert:privatekey$$
-      SCONE_NETWORK_SHIELD_SERVER_TCP_CLIENT_AUTH: $$SCONE::MARIADB_CA_CERT$$
 
       SCONE_NETWORK_SHIELD_CLIENT_PRIMARY: protected
       SCONE_NETWORK_SHIELD_CLIENT_PRIMARY_DESTINATION: "TCP:${MARIADB_PRIMARY_SERVICE_NAME}:3306"
@@ -134,6 +133,17 @@ images:
           service=rwsplit
           protocol=MariaDBClient
           port=3306
+          ssl=true
+          ssl_cert=/etc/maxscale/ssl/server.crt
+          ssl_key=/etc/maxscale/ssl/server.key
+          ssl_ca_cert=/etc/maxscale/ssl/ca.crt
+
+      - path: /etc/maxscale/ssl/server.crt
+        content: $$SCONE::maxscale-frontend-cert$$
+      - path: /etc/maxscale/ssl/server.key
+        content: $$SCONE::maxscale-frontend-cert:privatekey$$
+      - path: /etc/maxscale/ssl/ca.crt
+        content: $$SCONE::MARIADB_CA_CERT$$
 
     volumes:
        - name: protected_do_not_change_encrypted_volume

@@ -40,6 +40,7 @@ public class MaxscaleDeploymentDependentResource extends CRUDKubernetesDependent
         ResourceRequirements resources = Common.buildSgxResources(memory);
 
         String sconeVolumeDir = "scone-volume";
+        String sslVolumeDir = "maxscale-ssl";
 
         Container container = new ContainerBuilder()
             .withName(name + "-container")
@@ -53,7 +54,8 @@ public class MaxscaleDeploymentDependentResource extends CRUDKubernetesDependent
                 new ContainerPortBuilder().withName(Constants.MAXSCALE_ADMIN_PORT_NAME).withContainerPort(Constants.MAXSCALE_ADMIN_PORT).withProtocol("TCP").build()
             )
             .withVolumeMounts(
-                new VolumeMountBuilder().withName(sconeVolumeDir).withMountPath("/protected_do_not_change_encrypted_dir").build()
+                new VolumeMountBuilder().withName(sconeVolumeDir).withMountPath("/protected_do_not_change_encrypted_dir").build(),
+                new VolumeMountBuilder().withName(sslVolumeDir).withMountPath("/etc/maxscale/ssl").build()
             )
             .build();
 
@@ -62,6 +64,11 @@ public class MaxscaleDeploymentDependentResource extends CRUDKubernetesDependent
             .withEmptyDir(new EmptyDirVolumeSourceBuilder().build())
             .build();
 
-        return Common.buildDeployment(name, namespace, imagePullSecretName, container, spec.getReplicas(), List.of(sconeVolume));
+        Volume sslVolume = new VolumeBuilder()
+            .withName(sslVolumeDir)
+            .withEmptyDir(new EmptyDirVolumeSourceBuilder().build())
+            .build();
+
+        return Common.buildDeployment(name, namespace, imagePullSecretName, container, spec.getReplicas(), List.of(sconeVolume, sslVolume));
     }
 }

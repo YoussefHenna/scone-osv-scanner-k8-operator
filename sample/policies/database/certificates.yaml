@@ -64,6 +64,7 @@ secrets:
       - session: osv-scanner-sample/mariadb-replica
       - session: osv-scanner-sample/mariadb-backup
       - session: osv-scanner-sample/mariadb-dba-policy
+      - session: osv-scanner-sample/scone-osv-scan
 
 
   - name: maxscale-frontend-key
@@ -80,9 +81,9 @@ secrets:
     dns:
       - maxscale
       - mariadb
+      - ${MAXSCALE_SERVICE_NAME}
     export:
       - session: osv-scanner-sample/mariadb-maxscale
-      - session: osv-scanner-sample/scone-osv-scan
 
   - name: maxscale-internal-key
     kind: private-key

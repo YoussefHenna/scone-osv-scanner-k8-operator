@@ -27,7 +27,7 @@ services:
       MYSQL_CA_PATH: /etc/mysql/ca/ca.crt
       SCONE_SYNC_FSPF_TAG_WITH_CAS: 0
       SCONE_FSPF_UPDATE_POLICY: "on-exit"
-      LOG_LEVEL: INFO
+      LOG_LEVEL: DEBUG # INFO for production environments
       DB_UPDATE_INTERVAL: "24h"
 
     pwd: /
@@ -45,7 +45,7 @@ services:
       MYSQL_CA_PATH: /etc/mysql/ca/ca.crt
       TLS_KEY_PATH: /etc/ssl/certs/tls.key
       TLS_CERT_PATH: /etc/ssl/certs/tls.crt
-      LOG_LEVEL: INFO
+      LOG_LEVEL: DEBUG
 
     pwd: /
     image_name: osvscan_image
@@ -54,20 +54,20 @@ services:
 
 
 secrets:
-  - name: maxscale-frontend-cert
+  - name: MARIADB_CA_CERT
     import:
       session: osv-scanner-sample/mariadb-certificates
-      secret: maxscale-frontend-cert
+      secret: MARIADB_CA_CERT
   - name: MYSQL_ROOT_PASSWORD
     import:
       session: osv-scanner-sample/mariadb-certificates
       secret: MYSQL_ROOT_PASSWORD
   - name: osvscan_key
     kind: private-key
-    key_type: P-256
+    migrate: true
   - name: sos_ca_private_key
     kind: private-key
-    key_type: P-256
+    migrate: true
   - name: sos_ca_certificate
     kind: x509-ca
     export_public: true
@@ -80,8 +80,10 @@ secrets:
     issuer: sos_ca_certificate
     common_name: sos-front.sos.svc.cluster.local
     endpoint: server
-#    san:
-#      - ip:{{LOAD_BALANCER_EXTERNAL_IP}} # This should be replaced with the actual IP address of the service
+    dns:
+      - localhost
+    #    san:
+    #      - ip:{{LOAD_BALANCER_EXTERNAL_IP}} # This should be replaced with the actual IP address of the service
     valid_for: 365 days
 
 volumes:
@@ -92,6 +94,7 @@ images:
     volumes:
       - name: temp_volume
         path: /tmp
+        update_policy: no_rollback_protection
 
     injection_files:
       - path: /etc/ssl/certs/GTS_Root_R1.pem
@@ -128,15 +131,17 @@ images:
           bP6MvPJwNQzcmRk13NfIRmPVNnGuV/u3gm3c
           -----END CERTIFICATE-----
       - path: /etc/mysql/ca/ca.crt
-        content: $$SCONE::maxscale-frontend-cert$$
+        content: $$SCONE::MARIADB_CA_CERT$$
 
   - name: osvscan_image
     injection_files:
       - path: /etc/mysql/ca/ca.crt
-        content: $$SCONE::maxscale-frontend-cert$$
+        content: $$SCONE::MARIADB_CA_CERT$$
       - path: /etc/ssl/certs/tls.crt
         content: $$SCONE::osvscan_certificate:crt$$
       - path: /etc/ssl/certs/tls.key
         content: $$SCONE::osvscan_certificate:privatekey$$
+      - path: /etc/ssl/certs/sos-ca.crt
+        content: $$SCONE::sos_ca_certificate:crt$$
 
 
