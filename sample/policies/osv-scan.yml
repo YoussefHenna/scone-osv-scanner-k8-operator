@@ -29,6 +29,7 @@ services:
       SCONE_FSPF_UPDATE_POLICY: "on-exit"
       LOG_LEVEL: DEBUG # INFO for production environments
       DB_UPDATE_INTERVAL: "24h"
+      OSV_ECOSYSTEMS_LIST: ${OSV_ECOSYSTEMS_LIST}
 
     pwd: /
     image_name: dbmanager_image
