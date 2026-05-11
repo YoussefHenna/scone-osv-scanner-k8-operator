@@ -9,6 +9,7 @@ public class PolicyUploadStatusItem {
     private String lastStateUpdate;
     private PolicyUpdateState lastState;
     private String lastFile;
+    private String lastHash;
 
     public PolicyUploadStatusItem() {}
 
@@ -44,5 +45,17 @@ public class PolicyUploadStatusItem {
 
     public void setLastFile(String lastFile) {
         this.lastFile = lastFile;
+    }
+
+    public String getLastHash() {
+        return lastHash;
+    }
+
+    public void setLastHash(String lastHash) {
+        this.lastHash = lastHash;
+    }
+
+    public void setLastStateUpdate(String lastStateUpdate) {
+        this.lastStateUpdate = lastStateUpdate;
     }
 }

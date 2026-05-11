@@ -1,4 +1,4 @@
-name: osv-scanner-sample/scone-osv-scan
+name: osv-scanner-sample2/scone-osv-scan
 version: 0.3.10
 
 
@@ -57,11 +57,11 @@ services:
 secrets:
   - name: MARIADB_CA_CERT
     import:
-      session: osv-scanner-sample/mariadb-certificates
+      session: osv-scanner-sample2/mariadb-certificates
       secret: MARIADB_CA_CERT
   - name: MYSQL_ROOT_PASSWORD
     import:
-      session: osv-scanner-sample/mariadb-certificates
+      session: osv-scanner-sample2/mariadb-certificates
       secret: MYSQL_ROOT_PASSWORD
   - name: osvscan_key
     kind: private-key

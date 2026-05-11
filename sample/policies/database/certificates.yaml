@@ -1,6 +1,6 @@
 ## This policy manages MariaDB certificates, in a way that
 ## allows multiple instances to have the same set of certificates.
-name: osv-scanner-sample/mariadb-certificates
+name: osv-scanner-sample2/mariadb-certificates
 version: "0.3.10"
 
 access_policy:
@@ -18,12 +18,12 @@ secrets:
     kind: binary
     size: 20
     export:
-      - session: osv-scanner-sample/mariadb-primary
-      - session: osv-scanner-sample/mariadb-replica
-      - session: osv-scanner-sample/mariadb-backup
-      - session: osv-scanner-sample/mariadb-dba-policy
-      - session: osv-scanner-sample/mariadb-maxscale
-      - session: osv-scanner-sample/scone-osv-scan
+      - session: osv-scanner-sample2/mariadb-primary
+      - session: osv-scanner-sample2/mariadb-replica
+      - session: osv-scanner-sample2/mariadb-backup
+      - session: osv-scanner-sample2/mariadb-dba-policy
+      - session: osv-scanner-sample2/mariadb-maxscale
+      - session: osv-scanner-sample2/scone-osv-scan
       ## If there is another security policy that should have access
       ## to the mariadb root password, add it to this list.
       # - session: some-other-session
@@ -35,23 +35,23 @@ secrets:
     kind: binary
     size: 20
     export:
-      - session: osv-scanner-sample/mariadb-primary
-      - session: osv-scanner-sample/mariadb-replica
-      - session: osv-scanner-sample/mariadb-maxscale
+      - session: osv-scanner-sample2/mariadb-primary
+      - session: osv-scanner-sample2/mariadb-replica
+      - session: osv-scanner-sample2/mariadb-maxscale
 
   - name: MAXSCALE_SCONE_INJECTED_ADMIN_PASSWORD
     kind: binary
     size: 20
     export:
-      - session: osv-scanner-sample/mariadb-maxscale
+      - session: osv-scanner-sample2/mariadb-maxscale
 
   ## Randomly generate a private key for MariaDB's CA.
   - name: MARIADB_CA_KEY
     kind: private-key
     migrate: true
     export:
-      - session: osv-scanner-sample/mariadb-primary
-      - session: osv-scanner-sample/mariadb-replica
+      - session: osv-scanner-sample2/mariadb-primary
+      - session: osv-scanner-sample2/mariadb-replica
 
   ## Randomly generate a CA for MariaDB.
   - name: MARIADB_CA_CERT
@@ -59,19 +59,19 @@ secrets:
     common_name: MariaDB_CA
     private_key: MARIADB_CA_KEY
     export:
-      - session: osv-scanner-sample/mariadb-maxscale
-      - session: osv-scanner-sample/mariadb-primary
-      - session: osv-scanner-sample/mariadb-replica
-      - session: osv-scanner-sample/mariadb-backup
-      - session: osv-scanner-sample/mariadb-dba-policy
-      - session: osv-scanner-sample/scone-osv-scan
+      - session: osv-scanner-sample2/mariadb-maxscale
+      - session: osv-scanner-sample2/mariadb-primary
+      - session: osv-scanner-sample2/mariadb-replica
+      - session: osv-scanner-sample2/mariadb-backup
+      - session: osv-scanner-sample2/mariadb-dba-policy
+      - session: osv-scanner-sample2/scone-osv-scan
 
 
   - name: maxscale-frontend-key
     kind: private-key
     migrate: true
     export:
-      - session: osv-scanner-sample/mariadb-maxscale
+      - session: osv-scanner-sample2/mariadb-maxscale
 
   - name: maxscale-frontend-cert
     kind: x509
@@ -83,13 +83,13 @@ secrets:
       - mariadb
       - ${MAXSCALE_SERVICE_NAME}
     export:
-      - session: osv-scanner-sample/mariadb-maxscale
+      - session: osv-scanner-sample2/mariadb-maxscale
 
   - name: maxscale-internal-key
     kind: private-key
     migrate: true
     export:
-      - session: osv-scanner-sample/mariadb-maxscale
+      - session: osv-scanner-sample2/mariadb-maxscale
 
   - name: maxscale-internal-cert
     kind: x509
@@ -99,15 +99,15 @@ secrets:
     dns:
       - maxscale-internal
     export:
-      - session: osv-scanner-sample/mariadb-maxscale
+      - session: osv-scanner-sample2/mariadb-maxscale
 
   ## Randomly generate a private key for MariaDB's server certificate.
   - name: mariadb-key
     kind: private-key
     migrate: true
     export:
-      - session: osv-scanner-sample/mariadb-primary
-      - session: osv-scanner-sample/mariadb-replica
+      - session: osv-scanner-sample2/mariadb-primary
+      - session: osv-scanner-sample2/mariadb-replica
 
   ## Randomly generate the server certificates for MariaDB.
   ## Note that this certificate is issued by MariaDB's CA.
@@ -122,14 +122,14 @@ secrets:
       - ${MARIADB_REPLICA_SERVICE_NAME}
       - localhost # for metrics exporter
     export:
-      - session: osv-scanner-sample/mariadb-primary
-      - session: osv-scanner-sample/mariadb-replica
+      - session: osv-scanner-sample2/mariadb-primary
+      - session: osv-scanner-sample2/mariadb-replica
 
   - name: backup-key
     kind: private-key
     migrate: true
     export:
-      - session: osv-scanner-sample/mariadb-backup
+      - session: osv-scanner-sample2/mariadb-backup
 
   - name: backup-cert
     private_key: backup-key
@@ -139,16 +139,16 @@ secrets:
     dns:
       - mariadb-backup
     export:
-      - session: osv-scanner-sample/mariadb-backup
+      - session: osv-scanner-sample2/mariadb-backup
 
    ## Randomly generate a private key for MariaDB's bootstrap setup (client side).
   - name: setupClientKey
     kind: private-key
     migrate: true
     export:
-      - session: osv-scanner-sample/mariadb-primary
-      - session: osv-scanner-sample/mariadb-replica
-      - session: osv-scanner-sample/mariadb-dba-policy
+      - session: osv-scanner-sample2/mariadb-primary
+      - session: osv-scanner-sample2/mariadb-replica
+      - session: osv-scanner-sample2/mariadb-dba-policy
 
   ## Randomly generate the client certificate for MariaDB's bootstrap setup (client side).
   ## Note that this certificate is issued by MariaDB's CA.
@@ -160,7 +160,7 @@ secrets:
       - setup-client
     kind: x509
     export:
-      - session: osv-scanner-sample/mariadb-primary
-      - session: osv-scanner-sample/mariadb-replica
-      - session: osv-scanner-sample/mariadb-dba-policy
+      - session: osv-scanner-sample2/mariadb-primary
+      - session: osv-scanner-sample2/mariadb-replica
+      - session: osv-scanner-sample2/mariadb-dba-policy
 

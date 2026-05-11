@@ -1,4 +1,4 @@
-name: osv-scanner-sample/mariadb-dba-policy
+name: osv-scanner-sample2/mariadb-dba-policy
 version: "0.3.10"
 
 
@@ -75,16 +75,16 @@ services:
 secrets:
   - name: MYSQL_ROOT_PASSWORD
     import:
-      session: osv-scanner-sample/mariadb-certificates
+      session: osv-scanner-sample2/mariadb-certificates
       secret: MYSQL_ROOT_PASSWORD
 
   - name: MARIADB_CA_CERT
     import:
-      session: osv-scanner-sample/mariadb-certificates
+      session: osv-scanner-sample2/mariadb-certificates
       secret: MARIADB_CA_CERT
 
   - name: setupClientCert
     kind: x509
     import:
-      session: osv-scanner-sample/mariadb-certificates
+      session: osv-scanner-sample2/mariadb-certificates
       secret: setupClientCert

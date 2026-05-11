@@ -1,4 +1,4 @@
-name: osv-scanner-sample/mariadb-maxscale
+name: osv-scanner-sample2/mariadb-maxscale
 version: "0.3.10"
 
 
@@ -156,40 +156,40 @@ volumes:
 secrets:
   - name: MYSQL_ROOT_PASSWORD
     import:
-      session: osv-scanner-sample/mariadb-certificates
+      session: osv-scanner-sample2/mariadb-certificates
       secret: MYSQL_ROOT_PASSWORD
 
   - name: REPLICATION_USER_PASSWORD
     import:
-      session: osv-scanner-sample/mariadb-certificates
+      session: osv-scanner-sample2/mariadb-certificates
       secret: REPLICATION_USER_PASSWORD
 
   - name: MAXSCALE_SCONE_INJECTED_ADMIN_PASSWORD
     import:
-      session: osv-scanner-sample/mariadb-certificates
+      session: osv-scanner-sample2/mariadb-certificates
       secret: MAXSCALE_SCONE_INJECTED_ADMIN_PASSWORD
 
   - name: maxscale-frontend-key
     import:
-      session: osv-scanner-sample/mariadb-certificates
+      session: osv-scanner-sample2/mariadb-certificates
       secret: maxscale-frontend-key
 
   - name: maxscale-frontend-cert
     import:
-      session: osv-scanner-sample/mariadb-certificates
+      session: osv-scanner-sample2/mariadb-certificates
       secret: maxscale-frontend-cert
 
   - name: maxscale-internal-key
     import:
-      session: osv-scanner-sample/mariadb-certificates
+      session: osv-scanner-sample2/mariadb-certificates
       secret: maxscale-internal-key
 
   - name: maxscale-internal-cert
     import:
-      session: osv-scanner-sample/mariadb-certificates
+      session: osv-scanner-sample2/mariadb-certificates
       secret: maxscale-internal-cert
 
   - name: MARIADB_CA_CERT
     import:
-     session: osv-scanner-sample/mariadb-certificates
+     session: osv-scanner-sample2/mariadb-certificates
      secret: MARIADB_CA_CERT

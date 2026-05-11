@@ -74,13 +74,13 @@ spec:
       imageName: scone.cloud/sos-images/dbmanager
       imageVersion: 5.10.0-rc.5
       memory: 12G
-      sconeConfigId: osv-scanner-sample/scone-osv-scan/dbmanager
+      sconeConfigId: osv-scanner-sample2/scone-osv-scan/dbmanager
     frontApp:
       imageName: scone.cloud/sos-images/osvscan
       imageVersion: 5.10.0-rc.5
       replicas: 1
       memory: 5G
-      sconeConfigId: osv-scanner-sample/scone-osv-scan/osvscan
+      sconeConfigId: osv-scanner-sample2/scone-osv-scan/osvscan
   database:
     registryUrl: registry.scontain.com
     registryCredentials:
@@ -91,13 +91,13 @@ spec:
       imageVersion: maxscale-2.5-alpine
       replicas: 1
       memory: 2G
-      sconeConfigId: osv-scanner-sample/mariadb-maxscale/maxscale
+      sconeConfigId: osv-scanner-sample2/mariadb-maxscale/maxscale
     mariadb:
       imageName: scone.cloud/mariadb-11-alpine
       imageVersion: 6.0.6
       memory: 4G
-      sconeConfigId: osv-scanner-sample/mariadb-primary # base config, not a single service
-      replicaSconeConfigId: osv-scanner-sample/mariadb-replica # base config, not a single service
+      sconeConfigId: osv-scanner-sample2/mariadb-primary # base config, not a single service
+      replicaSconeConfigId: osv-scanner-sample2/mariadb-replica # base config, not a single service
       replicas: 1
       storageSize: 10Gi
       storageClassName: "default"

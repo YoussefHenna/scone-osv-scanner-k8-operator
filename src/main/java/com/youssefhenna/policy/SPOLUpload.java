@@ -8,6 +8,7 @@ import com.youssefhenna.policy.model.FileWithSignature;
 import com.youssefhenna.policy.model.SPOLDefinition;
 import com.youssefhenna.policy.model.SessionContents;
 import com.youssefhenna.policy.model.http.ReadSessionResponse;
+import com.youssefhenna.policy.model.http.UploadSessionResponse;
 import com.youssefhenna.status.PolicyUpdateState;
 import com.youssefhenna.status.PolicyUploadStatusItem;
 import io.quarkus.logging.Log;
@@ -68,6 +69,7 @@ public class SPOLUpload {
         try {
             SessionContents parsedSessionContents = yamlMapper.readValue(spolDefinition.getSession(), SessionContents.class);
             ReadSessionResponse response = casClient.readSession(parsedSessionContents.getName());
+            statusItem.setLastHash(response.getHash());
             return response.getSession();
         } catch (CASClient.CASClientException e) {
             if (e.getStatusCode() == 404) {
@@ -122,8 +124,9 @@ public class SPOLUpload {
 
     private static void uploadSession(CASClient casClient, SPOLDefinition spolDefinition, PolicyUploadStatusItem statusItem) {
         try {
-            casClient.uploadSession(spolDefinition);
+            UploadSessionResponse response = casClient.uploadSession(spolDefinition);
             Log.info("Session '" + statusItem.getName() + "' uploaded to CAS");
+            statusItem.setLastHash(response.getHash());
             statusItem.setLastState(PolicyUpdateState.SUCCESS_UPLOADED);
         } catch (CASClient.CASClientException e) {
             if (e.getStatusCode() == 404) {

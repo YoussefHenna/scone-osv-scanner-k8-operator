@@ -1,4 +1,4 @@
-name: osv-scanner-sample/mariadb-replica
+name: osv-scanner-sample2/mariadb-replica
 version: "0.3.10"
 
 
@@ -315,43 +315,43 @@ secrets:
   - name: mysql_encryption_key32
     kind: binary
     import:
-      session: osv-scanner-sample/mariadb-primary
+      session: osv-scanner-sample2/mariadb-primary
       secret: mysql_encryption_key32
 
   - name: MYSQL_ROOT_PASSWORD
     import:
-      session: osv-scanner-sample/mariadb-certificates
+      session: osv-scanner-sample2/mariadb-certificates
       secret: MYSQL_ROOT_PASSWORD
 
   - name: METRICS_EXPORTER_PASSWORD
     import:
-      session: osv-scanner-sample/mariadb-certificates
+      session: osv-scanner-sample2/mariadb-certificates
       secret: METRICS_EXPORTER_PASSWORD
 
   - name: REPLICATION_USER_PASSWORD
     import:
-      session: osv-scanner-sample/mariadb-certificates
+      session: osv-scanner-sample2/mariadb-certificates
       secret: REPLICATION_USER_PASSWORD
 
   - name: MARIADB_CA_KEY
     import:
-      session: osv-scanner-sample/mariadb-certificates
+      session: osv-scanner-sample2/mariadb-certificates
       secret: MARIADB_CA_KEY
 
   - name: MARIADB_CA_CERT
     import:
-      session: osv-scanner-sample/mariadb-certificates
+      session: osv-scanner-sample2/mariadb-certificates
       secret: MARIADB_CA_CERT
 
   - name: mariadb
     import:
-      session: osv-scanner-sample/mariadb-certificates
+      session: osv-scanner-sample2/mariadb-certificates
       secret: mariadb
 
   - name: setupClientCert
     kind: x509
     import:
-      session: osv-scanner-sample/mariadb-certificates
+      session: osv-scanner-sample2/mariadb-certificates
       secret: setupClientCert
 
 ## To disable NATIVE-ENCRYPTION and use SCONE runtime encrypted volumes,
