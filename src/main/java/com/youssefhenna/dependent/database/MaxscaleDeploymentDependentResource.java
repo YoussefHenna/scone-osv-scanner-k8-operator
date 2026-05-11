@@ -1,9 +1,9 @@
 package com.youssefhenna.dependent.database;
 
 import com.youssefhenna.SconeOsvScanner;
+import com.youssefhenna.spec.SconeOsvScannerSpec;
 import com.youssefhenna.spec.database.DatabaseSpec;
 import com.youssefhenna.spec.database.MaxscaleSpec;
-import com.youssefhenna.spec.SconeOsvScannerSpec;
 import com.youssefhenna.utils.Common;
 import com.youssefhenna.utils.Constants;
 import io.fabric8.kubernetes.api.model.*;
@@ -69,6 +69,6 @@ public class MaxscaleDeploymentDependentResource extends CRUDKubernetesDependent
             .withEmptyDir(new EmptyDirVolumeSourceBuilder().build())
             .build();
 
-        return Common.buildDeployment(name, namespace, imagePullSecretName, container, spec.getReplicas(), List.of(sconeVolume, sslVolume));
+        return Common.buildDeployment(name, namespace, imagePullSecretName, container, spec.getReplicas(), List.of(sconeVolume, sslVolume), Common.getPolicyHashAnnotation(primary, spec.getSconeConfigId()));
     }
 }

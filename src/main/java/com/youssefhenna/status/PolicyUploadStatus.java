@@ -41,4 +41,22 @@ public class PolicyUploadStatus {
     public void setLastSyncedUpstream(PolicyUpstreamSpec lastSyncedUpstream) {
         this.lastSyncedUpstream = lastSyncedUpstream;
     }
+
+    public String getHashForConfigId(String configId) {
+        if (policyUpdateStatuses == null) return null;
+        PolicyUploadStatusItem item = policyUpdateStatuses.get(configId);
+        return item != null ? item.getLastHash() : null;
+    }
+
+    public boolean hashesChanged(PolicyUploadStatus previous) {
+        if (previous == null || previous.getPolicyUpdateStatuses() == null) return false;
+        if (policyUpdateStatuses == null) return false;
+        for (Map.Entry<String, PolicyUploadStatusItem> entry : policyUpdateStatuses.entrySet()) {
+            PolicyUploadStatusItem prev = previous.getPolicyUpdateStatuses().get(entry.getKey());
+            String newHash = entry.getValue().getLastHash();
+            String oldHash = prev != null ? prev.getLastHash() : null;
+            if (newHash != null && !newHash.equals(oldHash)) return true;
+        }
+        return false;
+    }
 }

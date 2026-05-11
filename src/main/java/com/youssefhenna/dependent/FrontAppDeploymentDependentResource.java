@@ -1,9 +1,9 @@
 package com.youssefhenna.dependent;
 
 import com.youssefhenna.SconeOsvScanner;
+import com.youssefhenna.spec.SconeOsvScannerSpec;
 import com.youssefhenna.spec.scanner.FrontAppSpec;
 import com.youssefhenna.spec.scanner.ScannerSpec;
-import com.youssefhenna.spec.SconeOsvScannerSpec;
 import com.youssefhenna.utils.Common;
 import com.youssefhenna.utils.Constants;
 import io.fabric8.kubernetes.api.model.*;
@@ -41,7 +41,7 @@ public class FrontAppDeploymentDependentResource extends CRUDKubernetesDependent
 
         Probe livenessProbe = new ProbeBuilder()
             .withNewTcpSocket()
-                .withPort(new IntOrString(Constants.FRONT_APP_PORT))
+            .withPort(new IntOrString(Constants.FRONT_APP_PORT))
             .endTcpSocket()
             .withInitialDelaySeconds(30)
             .withPeriodSeconds(60)
@@ -51,7 +51,7 @@ public class FrontAppDeploymentDependentResource extends CRUDKubernetesDependent
 
         Probe readinessProbe = new ProbeBuilder()
             .withNewTcpSocket()
-                .withPort(new IntOrString(Constants.FRONT_APP_PORT))
+            .withPort(new IntOrString(Constants.FRONT_APP_PORT))
             .endTcpSocket()
             .withInitialDelaySeconds(10)
             .withPeriodSeconds(30)
@@ -70,7 +70,7 @@ public class FrontAppDeploymentDependentResource extends CRUDKubernetesDependent
             .withReadinessProbe(readinessProbe)
             .build();
 
-        return Common.buildDeployment(name, namespace, imagePullSecretName, container, spec.getReplicas());
+        return Common.buildDeployment(name, namespace, imagePullSecretName, container, spec.getReplicas(), Common.getPolicyHashAnnotation(primary, spec.getSconeConfigId()));
     }
 
 

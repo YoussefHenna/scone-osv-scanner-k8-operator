@@ -1,12 +1,15 @@
 package com.youssefhenna.dependent;
 
 import com.youssefhenna.SconeOsvScanner;
+import com.youssefhenna.spec.SconeOsvScannerSpec;
 import com.youssefhenna.spec.scanner.DbManagerSpec;
 import com.youssefhenna.spec.scanner.ScannerSpec;
-import com.youssefhenna.spec.SconeOsvScannerSpec;
 import com.youssefhenna.utils.Common;
 import com.youssefhenna.utils.Constants;
-import io.fabric8.kubernetes.api.model.*;
+import io.fabric8.kubernetes.api.model.Container;
+import io.fabric8.kubernetes.api.model.ContainerBuilder;
+import io.fabric8.kubernetes.api.model.EnvVar;
+import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.javaoperatorsdk.operator.api.config.informer.Informer;
 import io.javaoperatorsdk.operator.api.reconciler.Context;
@@ -47,7 +50,7 @@ public class DbManagerDeploymentDependentResource extends CRUDKubernetesDependen
             .withResources(resources)
             .build();
 
-        return Common.buildDeployment(name, namespace, imagePullSecretName, container, 1);
+        return Common.buildDeployment(name, namespace, imagePullSecretName, container, 1, Common.getPolicyHashAnnotation(primary, spec.getSconeConfigId()));
     }
 
 }

@@ -1,5 +1,7 @@
 package com.youssefhenna.utils;
 
+import com.youssefhenna.SconeOsvScanner;
+import com.youssefhenna.status.PolicyUploadStatus;
 import io.fabric8.kubernetes.api.model.*;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
@@ -52,19 +54,30 @@ public class Common {
             .build();
     }
 
-    public static Deployment buildDeployment(String name, String namespace, String imagePullSecretName, Container container, int replicas) {
-        return buildDeployment(name, namespace, imagePullSecretName, container, replicas, List.of());
+    public static Map<String, String> getPolicyHashAnnotation(SconeOsvScanner primary, String sconeConfigId) {
+        if (primary.getStatus() == null) return null;
+        PolicyUploadStatus uploadStatus = primary.getStatus().getPolicyUploadStatus();
+        if (uploadStatus == null) return null;
+        String hash = uploadStatus.getHashForConfigId(sconeConfigId);
+        return hash != null ? Map.of(Constants.POLICY_HASH_ANNOTATION, hash) : null;
     }
 
-    public static Deployment buildDeployment(String name, String namespace, String imagePullSecretName, Container container, int replicas, List<Volume> volumes) {
+    public static Deployment buildDeployment(String name, String namespace, String imagePullSecretName, Container container, int replicas, Map<String, String> podAnnotations) {
+        return buildDeployment(name, namespace, imagePullSecretName, container, replicas, List.of(), podAnnotations);
+    }
+
+    public static Deployment buildDeployment(String name, String namespace, String imagePullSecretName, Container container, int replicas, List<Volume> volumes, Map<String, String> podAnnotations) {
         LocalObjectReference imagePullSecret = new LocalObjectReferenceBuilder()
             .withName(imagePullSecretName)
             .build();
 
+        ObjectMetaBuilder podMetaBuilder = new ObjectMetaBuilder().addToLabels("app", name);
+        if (podAnnotations != null) {
+            podMetaBuilder.addToAnnotations(podAnnotations);
+        }
+
         PodTemplateSpec podTemplate = new PodTemplateSpecBuilder()
-            .withNewMetadata()
-            .addToLabels("app", name)
-            .endMetadata()
+            .withMetadata(podMetaBuilder.build())
             .withNewSpec()
             .withImagePullSecrets(imagePullSecret)
             .withContainers(container)

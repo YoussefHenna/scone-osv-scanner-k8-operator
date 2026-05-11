@@ -53,9 +53,18 @@ public class SconeOsvScannerReconciler implements Reconciler<SconeOsvScanner> {
 
         PolicyUpstreamSpec upstream = resource.getSpec().getPolicyUpstream();
         if (upstream != null) {
-            status.setPolicyUploadStatus(resolvePolicyUploadStatus(resource, upstream));
+            PolicyUploadStatus previousUploadStatus = resource.getStatus() != null
+                ? resource.getStatus().getPolicyUploadStatus()
+                : null;
+            PolicyUploadStatus newUploadStatus = resolvePolicyUploadStatus(resource, upstream);
+            status.setPolicyUploadStatus(newUploadStatus);
             resource.setStatus(status);
-            return UpdateControl.patchStatus(resource).rescheduleAfter(toDuration(upstream.getPoll()));
+
+            // if hashes changed, immediately reconcile so that dependant resource can restart if needed
+            Duration reschedule = newUploadStatus.hashesChanged(previousUploadStatus)
+                ? Duration.ZERO
+                : toDuration(upstream.getPoll());
+            return UpdateControl.patchStatus(resource).rescheduleAfter(reschedule);
         }
 
         resource.setStatus(status);

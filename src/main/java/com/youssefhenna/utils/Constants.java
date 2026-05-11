@@ -5,6 +5,7 @@ public class Constants {
     public static final String DEPENDANT_LABEL_KEY = "app.kubernetes.io/managed-by";
     public static final String DEPENDANT_LABEL_VALUE = "scone-osv-scanner-operator";
     public static final String DEPENDANT_SELECTOR = DEPENDANT_LABEL_KEY + "=" + DEPENDANT_LABEL_VALUE;
+    public static final String POLICY_HASH_ANNOTATION = "scone-osv-scanner-operator/policy-hash";
 
     public static final int FRONT_APP_PORT = 8443;
 

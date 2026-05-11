@@ -15,8 +15,11 @@ public abstract class AbstractMariadbServiceDependentResource extends CRUDKubern
     }
 
     protected abstract String getServiceName(String primaryName);
+
     protected abstract String getStatefulSetName(String primaryName);
+
     protected abstract int getPort();
+
     protected abstract String getPortName();
 
     @Override

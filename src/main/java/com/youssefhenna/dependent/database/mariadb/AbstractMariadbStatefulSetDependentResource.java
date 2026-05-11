@@ -1,9 +1,9 @@
 package com.youssefhenna.dependent.database.mariadb;
 
 import com.youssefhenna.SconeOsvScanner;
+import com.youssefhenna.spec.SconeOsvScannerSpec;
 import com.youssefhenna.spec.database.DatabaseSpec;
 import com.youssefhenna.spec.database.MariadbSpec;
-import com.youssefhenna.spec.SconeOsvScannerSpec;
 import com.youssefhenna.utils.Common;
 import com.youssefhenna.utils.Constants;
 import io.fabric8.kubernetes.api.model.*;
@@ -27,11 +27,17 @@ public abstract class AbstractMariadbStatefulSetDependentResource extends CRUDKu
     }
 
     protected abstract int getReplicas(DatabaseSpec dbSpec);
+
     protected abstract String getConfigId(MariadbSpec spec);
+
     protected abstract String getStatefulSetName(String primaryName);
+
     protected abstract String getEntrypointScript();
+
     protected abstract String getPortName();
+
     protected abstract int getPort();
+
     protected abstract List<Container> getInitContainers(String image, List<EnvVar> envVars, ResourceRequirements resources);
 
     @Override
@@ -113,10 +119,14 @@ public abstract class AbstractMariadbStatefulSetDependentResource extends CRUDKu
                 .build());
         }
 
+        Map<String, String> podAnnotations = Common.getPolicyHashAnnotation(primary, getConfigId(spec));
+        ObjectMetaBuilder podMetaBuilder = new ObjectMetaBuilder().addToLabels("app", name);
+        if (podAnnotations != null) {
+            podMetaBuilder.addToAnnotations(podAnnotations);
+        }
+
         statefulSetSpecBuilder.withTemplate(new PodTemplateSpecBuilder()
-            .withNewMetadata()
-            .addToLabels("app", name)
-            .endMetadata()
+            .withMetadata(podMetaBuilder.build())
             .withNewSpec()
             .withImagePullSecrets(new LocalObjectReferenceBuilder().withName(imagePullSecretName).build())
             .withInitContainers(getInitContainers(image, envVars, resources))
