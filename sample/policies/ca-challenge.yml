@@ -1,0 +1,20 @@
+name: osv-scanner-sample2/scone-osv-scan-ca-challenge
+version: "0.3.10"
+
+access_policy:
+  read:
+    - ANY
+  update:
+    - CREATOR
+
+secrets:
+  - name: challenge-private-key
+    kind: private-key
+    migrate: false
+    export:
+      - session: osv-scanner-sample2/scone-osv-scan
+
+  - name: challenge-cert
+    kind: x509
+    private_key: challenge-private-key
+    export_public: true

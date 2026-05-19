@@ -1,6 +1,7 @@
 package com.youssefhenna.utils;
 
 import com.youssefhenna.SconeOsvScanner;
+import com.youssefhenna.model.RegistryCredentials;
 import com.youssefhenna.status.PolicyUploadStatus;
 import io.fabric8.kubernetes.api.model.*;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
@@ -66,20 +67,25 @@ public class Common {
         return buildDeployment(name, namespace, imagePullSecretName, container, replicas, List.of(), podAnnotations);
     }
 
-    public static Deployment buildDeployment(String name, String namespace, String imagePullSecretName, Container container, int replicas, List<Volume> volumes, Map<String, String> podAnnotations) {
-        LocalObjectReference imagePullSecret = new LocalObjectReferenceBuilder()
-            .withName(imagePullSecretName)
-            .build();
+    public static String getImagePullSecretName(RegistryCredentials credentials) {
+        if (credentials == null || credentials.getSecretRef() == null) return null;
+        return credentials.getSecretRef().getName();
+    }
 
+    public static Deployment buildDeployment(String name, String namespace, String imagePullSecretName, Container container, int replicas, List<Volume> volumes, Map<String, String> podAnnotations) {
         ObjectMetaBuilder podMetaBuilder = new ObjectMetaBuilder().addToLabels("app", name);
         if (podAnnotations != null) {
             podMetaBuilder.addToAnnotations(podAnnotations);
         }
 
+        List<LocalObjectReference> imagePullSecrets = imagePullSecretName != null
+            ? List.of(new LocalObjectReferenceBuilder().withName(imagePullSecretName).build())
+            : List.of();
+
         PodTemplateSpec podTemplate = new PodTemplateSpecBuilder()
             .withMetadata(podMetaBuilder.build())
             .withNewSpec()
-            .withImagePullSecrets(imagePullSecret)
+            .withImagePullSecrets(imagePullSecrets)
             .withContainers(container)
             .withVolumes(volumes)
             .endSpec()

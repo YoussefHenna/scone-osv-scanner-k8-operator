@@ -52,7 +52,7 @@ public abstract class AbstractMariadbStatefulSetDependentResource extends CRUDKu
         String configMapName = Constants.getMariadbInitScriptsConfigMapName(primaryName);
 
         String image = Common.buildImage(dbSpec.getRegistryUrl(), spec.getImageName(), spec.getImageVersion());
-        String imagePullSecretName = dbSpec.getRegistryCredentials().getSecretRef().getName();
+        String imagePullSecretName = Common.getImagePullSecretName(dbSpec.getRegistryCredentials());
 
         String memory = spec.getMemory();
         List<EnvVar> envVars = Common.buildSconeEnvVars(memory, primarySpec.getCasAddress(), getConfigId(spec));
@@ -128,7 +128,7 @@ public abstract class AbstractMariadbStatefulSetDependentResource extends CRUDKu
         statefulSetSpecBuilder.withTemplate(new PodTemplateSpecBuilder()
             .withMetadata(podMetaBuilder.build())
             .withNewSpec()
-            .withImagePullSecrets(new LocalObjectReferenceBuilder().withName(imagePullSecretName).build())
+            .withImagePullSecrets(imagePullSecretName != null ? List.of(new LocalObjectReferenceBuilder().withName(imagePullSecretName).build()) : List.of())
             .withInitContainers(getInitContainers(image, envVars, resources))
             .withContainers(container)
             .withVolumes(volumes)

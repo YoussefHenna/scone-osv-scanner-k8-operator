@@ -66,18 +66,15 @@ spec:
       every: 10
       unit: MINUTES
   scanner:
-    registryUrl: registry.scontain.com
-    registryCredentials:
-      secretRef:
-        name: scontain-git-secret
+    registryUrl: registry-1.docker.io
     dbManager:
-      imageName: scone.cloud/sos-images/dbmanager
-      imageVersion: 5.10.0-rc.5
+      imageName: youssefhenna/sos-dbmanager
+      imageVersion: 1.0.0
       memory: 12G
       sconeConfigId: osv-scanner-sample2/scone-osv-scan/dbmanager
     frontApp:
-      imageName: scone.cloud/sos-images/osvscan
-      imageVersion: 5.10.0-rc.5
+      imageName: youssefhenna/sos-osvscan
+      imageVersion: 1.0.0
       replicas: 1
       memory: 5G
       sconeConfigId: osv-scanner-sample2/scone-osv-scan/osvscan
