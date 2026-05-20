@@ -1,7 +1,5 @@
 package com.youssefhenna.status;
 
-import com.youssefhenna.model.DependantStatus;
-
 public class SconeOsvScannerStatus {
 
     private DependantStatus dbManagerStatus;

@@ -16,6 +16,8 @@ public class CommonDependantSpec extends CommonRegistrySpec {
     @Required
     private String sconeConfigId;
 
+    private boolean autoUpdate = false;
+
     public String getImageName() {
         return imageName;
     }
@@ -46,5 +48,13 @@ public class CommonDependantSpec extends CommonRegistrySpec {
 
     public void setSconeConfigId(String sconeConfigId) {
         this.sconeConfigId = sconeConfigId;
+    }
+
+    public boolean isAutoUpdate() {
+        return autoUpdate;
+    }
+
+    public void setAutoUpdate(boolean autoUpdate) {
+        this.autoUpdate = autoUpdate;
     }
 }

@@ -4,7 +4,8 @@ import com.youssefhenna.dependent.DbManagerDeploymentDependentResource;
 import com.youssefhenna.dependent.FrontAppDeploymentDependentResource;
 import com.youssefhenna.dependent.FrontAppServiceDependentResource;
 import com.youssefhenna.dependent.database.*;
-import com.youssefhenna.model.DependantStatus;
+import com.youssefhenna.status.DependantState;
+import com.youssefhenna.status.DependantStatus;
 import com.youssefhenna.model.PollConfig;
 import com.youssefhenna.policy.PolicySync;
 import com.youssefhenna.policy.cas.HttpCASClient;
@@ -160,25 +161,35 @@ public class SconeOsvScannerReconciler implements Reconciler<SconeOsvScanner> {
 
     private DependantStatus resolveDeploymentStatus(Deployment deployment) {
         if (deployment == null || deployment.getStatus() == null) {
-            return DependantStatus.STARTING;
+            return new DependantStatus(DependantState.STARTING, null);
         }
-        return resolveReplicaStatus(deployment.getStatus().getReadyReplicas(), deployment.getStatus().getReplicas());
+        DependantState state = resolveReplicaState(deployment.getStatus().getReadyReplicas(), deployment.getStatus().getReplicas());
+        String version = extractImageVersion(deployment.getSpec().getTemplate().getSpec().getContainers().getFirst().getImage());
+        return new DependantStatus(state, version);
     }
 
     private DependantStatus resolveStatefulSetStatus(StatefulSet statefulSet) {
         if (statefulSet == null || statefulSet.getStatus() == null) {
-            return DependantStatus.STARTING;
+            return new DependantStatus(DependantState.STARTING, null);
         }
-        return resolveReplicaStatus(statefulSet.getStatus().getReadyReplicas(), statefulSet.getStatus().getReplicas());
+        DependantState state = resolveReplicaState(statefulSet.getStatus().getReadyReplicas(), statefulSet.getStatus().getReplicas());
+        String version = extractImageVersion(statefulSet.getSpec().getTemplate().getSpec().getContainers().getFirst().getImage());
+        return new DependantStatus(state, version);
     }
 
-    private DependantStatus resolveReplicaStatus(Integer ready, Integer total) {
+    private DependantState resolveReplicaState(Integer ready, Integer total) {
         if (ready != null && ready.equals(total) && total > 0) {
-            return DependantStatus.RUNNING;
+            return DependantState.RUNNING;
         }
         if (ready != null && total != null && ready < total) {
-            return DependantStatus.FAILING;
+            return DependantState.FAILING;
         }
-        return DependantStatus.STARTING;
+        return DependantState.STARTING;
+    }
+
+    private String extractImageVersion(String image) {
+        if (image == null) return null;
+        int colon = image.lastIndexOf(':');
+        return colon >= 0 ? image.substring(colon + 1) : null;
     }
 }
