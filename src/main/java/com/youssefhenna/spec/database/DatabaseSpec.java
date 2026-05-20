@@ -1,35 +1,15 @@
 package com.youssefhenna.spec.database;
 
 import com.youssefhenna.model.RegistryCredentials;
+import com.youssefhenna.spec.CommonRegistrySpec;
 import io.fabric8.generator.annotation.Required;
 
-public class DatabaseSpec {
-    @Required
-    private String registryUrl;
-
-    private RegistryCredentials registryCredentials;
-
+public class DatabaseSpec extends CommonRegistrySpec {
     @Required
     private MaxscaleSpec maxscale;
 
     @Required
     private MariadbSpec mariadb;
-
-    public String getRegistryUrl() {
-        return registryUrl;
-    }
-
-    public void setRegistryUrl(String registryUrl) {
-        this.registryUrl = registryUrl;
-    }
-
-    public RegistryCredentials getRegistryCredentials() {
-        return registryCredentials;
-    }
-
-    public void setRegistryCredentials(RegistryCredentials registryCredentials) {
-        this.registryCredentials = registryCredentials;
-    }
 
     public MaxscaleSpec getMaxscale() {
         return maxscale;

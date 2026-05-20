@@ -1,6 +1,7 @@
 package com.youssefhenna.dependent.database.mariadb;
 
 import com.youssefhenna.SconeOsvScanner;
+import com.youssefhenna.spec.CommonRegistrySpec;
 import com.youssefhenna.spec.SconeOsvScannerSpec;
 import com.youssefhenna.spec.database.DatabaseSpec;
 import com.youssefhenna.spec.database.MariadbSpec;
@@ -51,8 +52,13 @@ public abstract class AbstractMariadbStatefulSetDependentResource extends CRUDKu
         String namespace = primary.getMetadata().getNamespace();
         String configMapName = Constants.getMariadbInitScriptsConfigMapName(primaryName);
 
-        String image = Common.buildImage(dbSpec.getRegistryUrl(), spec.getImageName(), spec.getImageVersion());
-        String imagePullSecretName = Common.getImagePullSecretName(dbSpec.getRegistryCredentials());
+        CommonRegistrySpec registrySpec = spec.resolveRegistrySpec(dbSpec, primarySpec);
+        if (registrySpec == null) {
+            throw new RuntimeException("Cannot resolve image registry for mariadb");
+        }
+
+        String image = Common.buildImage(registrySpec.getRegistryUrl(), spec.getImageName(), spec.getImageVersion());
+        String imagePullSecretName = Common.getImagePullSecretName(registrySpec.getRegistryCredentials());
 
         String memory = spec.getMemory();
         List<EnvVar> envVars = Common.buildSconeEnvVars(memory, primarySpec.getCasAddress(), getConfigId(spec));

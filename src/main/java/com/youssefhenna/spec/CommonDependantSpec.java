@@ -2,7 +2,7 @@ package com.youssefhenna.spec;
 
 import io.fabric8.generator.annotation.Required;
 
-public class CommonDependantSpec {
+public class CommonDependantSpec extends CommonRegistrySpec {
 
     @Required
     private String imageName;

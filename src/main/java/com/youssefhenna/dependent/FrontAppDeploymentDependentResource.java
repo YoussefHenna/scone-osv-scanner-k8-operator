@@ -1,6 +1,7 @@
 package com.youssefhenna.dependent;
 
 import com.youssefhenna.SconeOsvScanner;
+import com.youssefhenna.spec.CommonRegistrySpec;
 import com.youssefhenna.spec.SconeOsvScannerSpec;
 import com.youssefhenna.spec.scanner.FrontAppSpec;
 import com.youssefhenna.spec.scanner.ScannerSpec;
@@ -32,8 +33,13 @@ public class FrontAppDeploymentDependentResource extends CRUDKubernetesDependent
         String name = Constants.getFrontAppDeploymentName(primary.getMetadata().getName());
         String namespace = primary.getMetadata().getNamespace();
 
-        String image = Common.buildImage(scannerSpec.getRegistryUrl(), spec.getImageName(), spec.getImageVersion());
-        String imagePullSecretName = Common.getImagePullSecretName(scannerSpec.getRegistryCredentials());
+        CommonRegistrySpec registrySpec = spec.resolveRegistrySpec(scannerSpec, primarySpec);
+        if (registrySpec == null) {
+            throw new RuntimeException("Cannot resolve image registry for front app");
+        }
+
+        String image = Common.buildImage(registrySpec.getRegistryUrl(), spec.getImageName(), spec.getImageVersion());
+        String imagePullSecretName = Common.getImagePullSecretName(registrySpec.getRegistryCredentials());
 
         String memory = spec.getMemory();
         List<EnvVar> envVars = Common.buildSconeEnvVars(memory, primarySpec.getCasAddress(), spec.getSconeConfigId());

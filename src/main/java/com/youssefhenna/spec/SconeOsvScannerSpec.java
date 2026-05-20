@@ -5,7 +5,7 @@ import com.youssefhenna.spec.policy.PolicyUpstreamSpec;
 import com.youssefhenna.spec.scanner.ScannerSpec;
 import io.fabric8.generator.annotation.Required;
 
-public class SconeOsvScannerSpec {
+public class SconeOsvScannerSpec extends CommonRegistrySpec {
     @Required
     private String casAddress;
 

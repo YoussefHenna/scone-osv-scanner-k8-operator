@@ -1,6 +1,7 @@
 package com.youssefhenna.dependent.database;
 
 import com.youssefhenna.SconeOsvScanner;
+import com.youssefhenna.spec.CommonRegistrySpec;
 import com.youssefhenna.spec.SconeOsvScannerSpec;
 import com.youssefhenna.spec.database.DatabaseSpec;
 import com.youssefhenna.spec.database.MaxscaleSpec;
@@ -32,8 +33,13 @@ public class MaxscaleDeploymentDependentResource extends CRUDKubernetesDependent
         String name = Constants.getMaxscaleDeploymentName(primary.getMetadata().getName());
         String namespace = primary.getMetadata().getNamespace();
 
-        String image = Common.buildImage(dbSpec.getRegistryUrl(), spec.getImageName(), spec.getImageVersion());
-        String imagePullSecretName = Common.getImagePullSecretName(dbSpec.getRegistryCredentials());
+        CommonRegistrySpec registrySpec = spec.resolveRegistrySpec(dbSpec, primarySpec);
+        if (registrySpec == null) {
+            throw new RuntimeException("Cannot resolve image registry for maxscale");
+        }
+
+        String image = Common.buildImage(registrySpec.getRegistryUrl(), spec.getImageName(), spec.getImageVersion());
+        String imagePullSecretName = Common.getImagePullSecretName(registrySpec.getRegistryCredentials());
 
         String memory = spec.getMemory();
         List<EnvVar> envVars = Common.buildSconeEnvVars(memory, primarySpec.getCasAddress(), spec.getSconeConfigId());

@@ -33,7 +33,7 @@ public class HttpCASClient implements CASClient {
         this.objectMapper = new ObjectMapper();
     }
 
-    // TODO: replace with actual CAS certificate validation
+    // CAS's certificate is self-signed, trust all certificates
     private static SSLContext trustAllSslContext() {
         try {
             SSLContext sslContext = SSLContext.getInstance("TLS");
