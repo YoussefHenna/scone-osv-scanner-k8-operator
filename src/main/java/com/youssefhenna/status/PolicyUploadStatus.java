@@ -45,7 +45,19 @@ public class PolicyUploadStatus {
     public String getHashForConfigId(String configId) {
         if (policyUpdateStatuses == null) return null;
         PolicyUploadStatusItem item = policyUpdateStatuses.get(configId);
-        return item != null ? item.getLastHash() : null;
+        if (item != null) return item.getLastHash();
+
+        // configId may be pointing to an internal service of a policy. ex: scone-osv-scan/dbmanager where the policy name is scone-osv-scan.
+        // There would be no 1:1 matching from policy name to config id in that case.
+        // To tolerate that, find the longest match in the known policies to the config id
+        String longestMatch = null;
+        for (String key : policyUpdateStatuses.keySet()) {
+            if (configId.startsWith(key) && (longestMatch == null || key.length() > longestMatch.length())) {
+                longestMatch = key;
+            }
+        }
+        if (longestMatch == null) return null;
+        return policyUpdateStatuses.get(longestMatch).getLastHash();
     }
 
     public boolean hashesChanged(PolicyUploadStatus previous) {
