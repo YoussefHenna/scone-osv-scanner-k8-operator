@@ -7,6 +7,14 @@ public class Constants {
     public static final String DEPENDANT_SELECTOR = DEPENDANT_LABEL_KEY + "=" + DEPENDANT_LABEL_VALUE;
     public static final String POLICY_HASH_ANNOTATION = "scone-osv-scanner-operator/policy-hash";
 
+    public static final String IMAGE_VALIDATING_POLICY_INFORMER = "imageValidatingPolicyInformer";
+
+    public static final String DB_MANAGER_IMAGE_VALIDATING_POLICY_DEPENDENT_NAME = "dbManagerImageValidatingPolicy";
+    public static final String FRONT_APP_IMAGE_VALIDATING_POLICY_DEPENDENT_NAME = "frontAppImageValidatingPolicy";
+    public static final String MAXSCALE_IMAGE_VALIDATING_POLICY_DEPENDENT_NAME = "maxscaleImageValidatingPolicy";
+    public static final String MARIADB_PRIMARY_IMAGE_VALIDATING_POLICY_DEPENDENT_NAME = "mariadbPrimaryImageValidatingPolicy";
+    public static final String MARIADB_REPLICA_IMAGE_VALIDATING_POLICY_DEPENDENT_NAME = "mariadbReplicaImageValidatingPolicy";
+
     public static final int FRONT_APP_PORT = 8443;
 
     public static final String DB_MANAGER_DEPENDENT_NAME = "dbManager";
@@ -79,6 +87,26 @@ public class Constants {
 
     public static String getMariadbInitScriptsConfigMapName(String primaryName) {
         return primaryName + "-mariadb-init-scripts";
+    }
+
+    public static String getDbManagerImageValidatingPolicyName(String primaryName) {
+        return primaryName + "-db-manager-ivpol";
+    }
+
+    public static String getFrontAppImageValidatingPolicyName(String primaryName) {
+        return primaryName + "-front-app-ivpol";
+    }
+
+    public static String getMaxscaleImageValidatingPolicyName(String primaryName) {
+        return primaryName + "-maxscale-ivpol";
+    }
+
+    public static String getMariadbPrimaryImageValidatingPolicyName(String primaryName) {
+        return primaryName + "-mariadb-primary-ivpol";
+    }
+
+    public static String getMariadbReplicaImageValidatingPolicyName(String primaryName) {
+        return primaryName + "-mariadb-replica-ivpol";
     }
 
 }

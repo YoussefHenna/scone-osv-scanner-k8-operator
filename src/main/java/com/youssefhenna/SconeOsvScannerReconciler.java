@@ -4,6 +4,7 @@ import com.youssefhenna.dependent.DbManagerDeploymentDependentResource;
 import com.youssefhenna.dependent.FrontAppDeploymentDependentResource;
 import com.youssefhenna.dependent.FrontAppServiceDependentResource;
 import com.youssefhenna.dependent.database.*;
+import com.youssefhenna.dependent.kyverno.*;
 import com.youssefhenna.policy.PolicySync;
 import com.youssefhenna.policy.cas.HttpCASClient;
 import com.youssefhenna.spec.SconeOsvScannerSpec;
@@ -45,7 +46,12 @@ import java.util.Set;
         @Dependent(type = MariadbReplicaServiceDependentResource.class, name = Constants.MARIADB_REPLICA_SERVICE_DEPENDENT_NAME),
         @Dependent(type = MaxscaleDeploymentDependentResource.class, name = Constants.MAXSCALE_DEPLOYMENT_DEPENDENT_NAME),
         @Dependent(type = MariadbPrimaryStatefulSetDependentResource.class, name = Constants.MARIADB_PRIMARY_STATEFULSET_DEPENDENT_NAME),
-        @Dependent(type = MariadbReplicaStatefulSetDependentResource.class, name = Constants.MARIADB_REPLICA_STATEFULSET_DEPENDENT_NAME)
+        @Dependent(type = MariadbReplicaStatefulSetDependentResource.class, name = Constants.MARIADB_REPLICA_STATEFULSET_DEPENDENT_NAME),
+        @Dependent(type = DbManagerImageValidatingPolicyDependentResource.class, name = Constants.DB_MANAGER_IMAGE_VALIDATING_POLICY_DEPENDENT_NAME, reconcilePrecondition = DbManagerImageValidatingPolicyDependentResource.Condition.class),
+        @Dependent(type = FrontAppImageValidatingPolicyDependentResource.class, name = Constants.FRONT_APP_IMAGE_VALIDATING_POLICY_DEPENDENT_NAME, reconcilePrecondition = FrontAppImageValidatingPolicyDependentResource.Condition.class),
+        @Dependent(type = MaxscaleImageValidatingPolicyDependentResource.class, name = Constants.MAXSCALE_IMAGE_VALIDATING_POLICY_DEPENDENT_NAME, reconcilePrecondition = MaxscaleImageValidatingPolicyDependentResource.Condition.class),
+        @Dependent(type = MariadbPrimaryImageValidatingPolicyDependentResource.class, name = Constants.MARIADB_PRIMARY_IMAGE_VALIDATING_POLICY_DEPENDENT_NAME, reconcilePrecondition = MariadbPrimaryImageValidatingPolicyDependentResource.Condition.class),
+        @Dependent(type = MariadbReplicaImageValidatingPolicyDependentResource.class, name = Constants.MARIADB_REPLICA_IMAGE_VALIDATING_POLICY_DEPENDENT_NAME, reconcilePrecondition = MariadbReplicaImageValidatingPolicyDependentResource.Condition.class)
     })
 @ControllerConfiguration()
 public class SconeOsvScannerReconciler implements Reconciler<SconeOsvScanner> {

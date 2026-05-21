@@ -13,10 +13,12 @@ public class CommonDependantSpec extends CommonRegistrySpec {
     @Required
     private String memory;
 
-    @Required
+@Required
     private String sconeConfigId;
 
     private boolean autoUpdate = false;
+
+    private String cosignPublicKey;
 
     public String getImageName() {
         return imageName;
@@ -56,5 +58,13 @@ public class CommonDependantSpec extends CommonRegistrySpec {
 
     public void setAutoUpdate(boolean autoUpdate) {
         this.autoUpdate = autoUpdate;
+    }
+
+    public String getCosignPublicKey() {
+        return cosignPublicKey;
+    }
+
+    public void setCosignPublicKey(String cosignPublicKey) {
+        this.cosignPublicKey = cosignPublicKey;
     }
 }
