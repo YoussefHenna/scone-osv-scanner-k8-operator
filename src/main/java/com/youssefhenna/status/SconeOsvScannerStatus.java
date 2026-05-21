@@ -8,6 +8,7 @@ public class SconeOsvScannerStatus {
     private DependantStatus mariadbPrimaryStatus;
     private DependantStatus mariadbReplicaStatus;
     private PolicyUploadStatus policyUploadStatus;
+    private String lastAutoUpdateCheckTime;
 
     public DependantStatus getDbManagerStatus() {
         return dbManagerStatus;
@@ -55,5 +56,13 @@ public class SconeOsvScannerStatus {
 
     public void setPolicyUploadStatus(PolicyUploadStatus policyUploadStatus) {
         this.policyUploadStatus = policyUploadStatus;
+    }
+
+    public String getLastAutoUpdateCheckTime() {
+        return lastAutoUpdateCheckTime;
+    }
+
+    public void setLastAutoUpdateCheckTime(String lastAutoUpdateCheckTime) {
+        this.lastAutoUpdateCheckTime = lastAutoUpdateCheckTime;
     }
 }

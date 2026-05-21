@@ -1,5 +1,6 @@
 package com.youssefhenna.spec;
 
+import com.youssefhenna.model.PollConfig;
 import com.youssefhenna.spec.database.DatabaseSpec;
 import com.youssefhenna.spec.policy.PolicyUpstreamSpec;
 import com.youssefhenna.spec.scanner.ScannerSpec;
@@ -18,6 +19,8 @@ public class SconeOsvScannerSpec extends CommonRegistrySpec {
     private DatabaseSpec database;
 
     private PolicyUpstreamSpec policyUpstream;
+
+    private PollConfig autoUpdatePoll = new PollConfig(20, PollConfig.Unit.MINUTES);
 
     public String getCasAddress() {
         return casAddress;
@@ -57,5 +60,13 @@ public class SconeOsvScannerSpec extends CommonRegistrySpec {
 
     public void setPolicyUpstream(PolicyUpstreamSpec policyUpstream) {
         this.policyUpstream = policyUpstream;
+    }
+
+    public PollConfig getAutoUpdatePoll() {
+        return autoUpdatePoll;
+    }
+
+    public void setAutoUpdatePoll(PollConfig autoUpdatePoll) {
+        this.autoUpdatePoll = autoUpdatePoll;
     }
 }

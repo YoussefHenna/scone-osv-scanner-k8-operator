@@ -114,6 +114,12 @@ public class Common {
     }
 
 
+    public static String extractImageVersion(String image) {
+        if (image == null) return null;
+        int colon = image.lastIndexOf(':');
+        return colon >= 0 ? image.substring(colon + 1) : null;
+    }
+
     public static Date parseDate(String dateString) throws ParseException {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss'Z'");
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));

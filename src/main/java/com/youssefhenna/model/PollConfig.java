@@ -3,6 +3,12 @@ package com.youssefhenna.model;
 import io.fabric8.generator.annotation.Required;
 
 public class PollConfig {
+    public PollConfig(){}
+
+    public PollConfig(int every, Unit unit) {
+        this.every = every;
+        this.unit = unit;
+    }
 
     @Required
     private int every;

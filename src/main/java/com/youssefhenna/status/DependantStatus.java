@@ -3,6 +3,7 @@ package com.youssefhenna.status;
 public class DependantStatus {
     private DependantState state;
     private String currentVersion;
+    private String targetVersion;
     private UpdateStatus lastUpdateStatus;
 
     public DependantStatus() {}
@@ -26,6 +27,14 @@ public class DependantStatus {
 
     public void setCurrentVersion(String currentVersion) {
         this.currentVersion = currentVersion;
+    }
+
+    public String getTargetVersion() {
+        return targetVersion;
+    }
+
+    public void setTargetVersion(String targetVersion) {
+        this.targetVersion = targetVersion;
     }
 
     public UpdateStatus getLastUpdateStatus() {

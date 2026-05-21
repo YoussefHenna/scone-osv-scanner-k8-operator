@@ -4,26 +4,29 @@ import com.youssefhenna.dependent.DbManagerDeploymentDependentResource;
 import com.youssefhenna.dependent.FrontAppDeploymentDependentResource;
 import com.youssefhenna.dependent.FrontAppServiceDependentResource;
 import com.youssefhenna.dependent.database.*;
-import com.youssefhenna.status.DependantState;
-import com.youssefhenna.status.DependantStatus;
-import com.youssefhenna.model.PollConfig;
 import com.youssefhenna.policy.PolicySync;
 import com.youssefhenna.policy.cas.HttpCASClient;
+import com.youssefhenna.spec.SconeOsvScannerSpec;
 import com.youssefhenna.spec.policy.PolicyUpstreamSpec;
 import com.youssefhenna.status.PolicyUploadStatus;
-import com.youssefhenna.status.PolicyUploadStatusItem;
 import com.youssefhenna.status.SconeOsvScannerStatus;
+import com.youssefhenna.updates.ContainerUpdate;
+import com.youssefhenna.updates.model.DependantResourceType;
+import com.youssefhenna.updates.model.RunUpdateResult;
+import com.youssefhenna.updates.registry_read.RegistryImageVersionReader;
+import com.youssefhenna.updates.registry_read.RegistryImageVersionReaderImpl;
 import com.youssefhenna.utils.Common;
 import com.youssefhenna.utils.Constants;
+import com.youssefhenna.utils.PollUtils;
+import com.youssefhenna.utils.StatusUtils;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.StatefulSet;
+import io.fabric8.kubernetes.client.KubernetesClient;
 import io.javaoperatorsdk.operator.api.reconciler.*;
 import io.javaoperatorsdk.operator.api.reconciler.dependent.Dependent;
 
-import java.text.ParseException;
 import java.time.Duration;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -50,74 +53,45 @@ public class SconeOsvScannerReconciler implements Reconciler<SconeOsvScanner> {
 
     @Override
     public UpdateControl<SconeOsvScanner> reconcile(SconeOsvScanner resource, Context<SconeOsvScanner> context) {
+        KubernetesClient client = context.getClient();
         SconeOsvScannerStatus status = buildDependantsStatus(resource, context);
+
+        if (shouldRunAutoUpdate(resource)) {
+            RegistryImageVersionReader imageVersionReader = new RegistryImageVersionReaderImpl(client, resource.getMetadata().getNamespace());
+            Map<DependantResourceType, RunUpdateResult> updateResults = ContainerUpdate.runContainerUpdates(
+                resource,
+                imageVersionReader,
+                // runContainerUpdates is impure and modifies the resource object directly, as such can use 'resource' as is for patch
+                () -> client.resource(resource).patch()
+            );
+            StatusUtils.applyUpdateResultsToStatus(status, updateResults);
+            status.setLastAutoUpdateCheckTime(Common.dateToString(new Date()));
+        }
 
         PolicyUpstreamSpec upstream = resource.getSpec().getPolicyUpstream();
         if (upstream != null) {
             PolicyUploadStatus previousUploadStatus = resource.getStatus() != null
                 ? resource.getStatus().getPolicyUploadStatus()
                 : null;
-            PolicyUploadStatus newUploadStatus = resolvePolicyUploadStatus(resource, upstream);
+
+            PolicyUploadStatus newUploadStatus = previousUploadStatus;
+            if (shouldRunPolicySync(previousUploadStatus, upstream)) {
+                PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(
+                    upstream,
+                    new HttpCASClient(resource.getSpec().getCasAddress(), resource.getSpec().getCasPort())
+                );
+                newUploadStatus = StatusUtils.buildPolicyUploadStatus(upstream, result);
+            }
             status.setPolicyUploadStatus(newUploadStatus);
-            resource.setStatus(status);
 
             // if hashes changed, immediately reconcile so that dependant resource can restart if needed
             Duration reschedule = newUploadStatus.hashesChanged(previousUploadStatus)
                 ? Duration.ZERO
-                : toDuration(upstream.getPoll());
-            return UpdateControl.patchStatus(resource).rescheduleAfter(reschedule);
+                : PollUtils.minDuration(PollUtils.toDuration(upstream.getPoll()), PollUtils.toDuration(resource.getSpec().getAutoUpdatePoll()));
+            return patchStatus(resource, status, reschedule);
         }
 
-        resource.setStatus(status);
-        return UpdateControl.patchStatus(resource);
-    }
-
-    private PolicyUploadStatus resolvePolicyUploadStatus(SconeOsvScanner resource, PolicyUpstreamSpec upstream) {
-        PolicyUploadStatus existingUploadStatus = resource.getStatus() != null
-            ? resource.getStatus().getPolicyUploadStatus()
-            : null;
-
-        Duration pollDuration = toDuration(upstream.getPoll());
-        boolean shouldSync = true;
-        if (existingUploadStatus != null && existingUploadStatus.getLastSyncTime() != null) {
-            try {
-                Date lastSync = Common.parseDate(existingUploadStatus.getLastSyncTime());
-                Date nextSync = new Date(lastSync.getTime() + pollDuration.toMillis());
-                shouldSync = new Date().after(nextSync) || !upstream.equals(existingUploadStatus.getLastSyncedUpstream());
-            } catch (ParseException ignored) {
-            }
-        }
-
-        if (!shouldSync) {
-            return existingUploadStatus;
-        }
-
-        PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(
-            upstream,
-            new HttpCASClient(resource.getSpec().getCasAddress(), resource.getSpec().getCasPort())
-        );
-        return buildPolicyUploadStatus(upstream, result);
-    }
-
-    private PolicyUploadStatus buildPolicyUploadStatus(PolicyUpstreamSpec upstream, PolicySync.SyncPoliciesResult result) {
-        Map<String, PolicyUploadStatusItem> statues = new HashMap<>();
-        for (PolicyUploadStatusItem item : result.statuses()) {
-            statues.put(item.getName(), item);
-        }
-        PolicyUploadStatus uploadStatus = new PolicyUploadStatus();
-        uploadStatus.setLastRunStatus(result.overallStatus());
-        uploadStatus.setPolicyUpdateStatuses(statues);
-        uploadStatus.setLastSyncTime(Common.dateToString(new Date()));
-        uploadStatus.setLastSyncedUpstream(upstream);
-        return uploadStatus;
-    }
-
-    private Duration toDuration(PollConfig poll) {
-        return switch (poll.getUnit()) {
-            case DAYS -> Duration.ofDays(poll.getEvery());
-            case HOURS -> Duration.ofHours(poll.getEvery());
-            case MINUTES -> Duration.ofMinutes(poll.getEvery());
-        };
+        return patchStatus(resource, status, PollUtils.toDuration(resource.getSpec().getAutoUpdatePoll()));
     }
 
     private SconeOsvScannerStatus buildDependantsStatus(SconeOsvScanner resource, Context<SconeOsvScanner> context) {
@@ -125,6 +99,11 @@ public class SconeOsvScannerReconciler implements Reconciler<SconeOsvScanner> {
         Set<StatefulSet> dependantStatefulSets = context.getSecondaryResources(StatefulSet.class);
 
         String primaryName = resource.getMetadata().getName();
+        String namespace = resource.getMetadata().getNamespace();
+        KubernetesClient client = context.getClient();
+        SconeOsvScannerSpec spec = resource.getSpec();
+        SconeOsvScannerStatus previousStatus = resource.getStatus();
+
         Deployment dbManager = null;
         Deployment frontApp = null;
         Deployment maxscale = null;
@@ -151,45 +130,73 @@ public class SconeOsvScannerReconciler implements Reconciler<SconeOsvScanner> {
         }
 
         SconeOsvScannerStatus status = new SconeOsvScannerStatus();
-        status.setDbManagerStatus(resolveDeploymentStatus(dbManager));
-        status.setFrontAppStatus(resolveDeploymentStatus(frontApp));
-        status.setMaxscaleStatus(resolveDeploymentStatus(maxscale));
-        status.setMariadbPrimaryStatus(resolveStatefulSetStatus(mariadbPrimary));
-        status.setMariadbReplicaStatus(resolveStatefulSetStatus(mariadbReplica));
+        status.setDbManagerStatus(
+            StatusUtils.buildDeploymentStatus(
+                dbManager,
+                spec.getScanner().getDbManager().getImageVersion(),
+                previousStatus != null ? previousStatus.getDbManagerStatus() : null,
+                client,
+                namespace
+            )
+        );
+        status.setFrontAppStatus(
+            StatusUtils.buildDeploymentStatus(
+                frontApp,
+                spec.getScanner().getFrontApp().getImageVersion(),
+                previousStatus != null ? previousStatus.getFrontAppStatus() : null,
+                client,
+                namespace
+            )
+        );
+        status.setMaxscaleStatus(
+            StatusUtils.buildDeploymentStatus(
+                maxscale,
+                spec.getDatabase().getMaxscale().getImageVersion(),
+                previousStatus != null ? previousStatus.getMaxscaleStatus() : null,
+                client,
+                namespace
+            )
+        );
+        status.setMariadbPrimaryStatus(
+            StatusUtils.buildStatefulSetStatus(
+                mariadbPrimary,
+                spec.getDatabase().getMariadb().getImageVersion(),
+                previousStatus != null ? previousStatus.getMariadbPrimaryStatus() : null,
+                client,
+                namespace
+            )
+        );
+        status.setMariadbReplicaStatus(
+            StatusUtils.buildStatefulSetStatus(
+                mariadbReplica,
+                spec.getDatabase().getMariadb().getImageVersion(),
+                previousStatus != null ? previousStatus.getMariadbReplicaStatus() : null,
+                client,
+                namespace
+            )
+        );
+
+        if (previousStatus != null) {
+            status.setLastAutoUpdateCheckTime(previousStatus.getLastAutoUpdateCheckTime());
+        }
+
         return status;
     }
 
-    private DependantStatus resolveDeploymentStatus(Deployment deployment) {
-        if (deployment == null || deployment.getStatus() == null) {
-            return new DependantStatus(DependantState.STARTING, null);
-        }
-        DependantState state = resolveReplicaState(deployment.getStatus().getReadyReplicas(), deployment.getStatus().getReplicas());
-        String version = extractImageVersion(deployment.getSpec().getTemplate().getSpec().getContainers().getFirst().getImage());
-        return new DependantStatus(state, version);
+    private boolean shouldRunAutoUpdate(SconeOsvScanner resource) {
+        if (resource.getStatus() == null) return true;
+        return PollUtils.isPollElapsed(resource.getStatus().getLastAutoUpdateCheckTime(), resource.getSpec().getAutoUpdatePoll());
     }
 
-    private DependantStatus resolveStatefulSetStatus(StatefulSet statefulSet) {
-        if (statefulSet == null || statefulSet.getStatus() == null) {
-            return new DependantStatus(DependantState.STARTING, null);
-        }
-        DependantState state = resolveReplicaState(statefulSet.getStatus().getReadyReplicas(), statefulSet.getStatus().getReplicas());
-        String version = extractImageVersion(statefulSet.getSpec().getTemplate().getSpec().getContainers().getFirst().getImage());
-        return new DependantStatus(state, version);
+    private boolean shouldRunPolicySync(PolicyUploadStatus existingStatus, PolicyUpstreamSpec upstream) {
+        return existingStatus == null
+            || PollUtils.isPollElapsed(existingStatus.getLastSyncTime(), upstream.getPoll())
+            || !upstream.equals(existingStatus.getLastSyncedUpstream());
     }
 
-    private DependantState resolveReplicaState(Integer ready, Integer total) {
-        if (ready != null && ready.equals(total) && total > 0) {
-            return DependantState.RUNNING;
-        }
-        if (ready != null && total != null && ready < total) {
-            return DependantState.FAILING;
-        }
-        return DependantState.STARTING;
+    private UpdateControl<SconeOsvScanner> patchStatus(SconeOsvScanner resource, SconeOsvScannerStatus status, Duration reschedule) {
+        resource.setStatus(status);
+        return UpdateControl.patchStatus(resource).rescheduleAfter(reschedule);
     }
 
-    private String extractImageVersion(String image) {
-        if (image == null) return null;
-        int colon = image.lastIndexOf(':');
-        return colon >= 0 ? image.substring(colon + 1) : null;
-    }
 }
