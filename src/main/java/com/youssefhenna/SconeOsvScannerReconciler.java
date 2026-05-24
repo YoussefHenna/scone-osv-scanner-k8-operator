@@ -16,20 +16,23 @@ import com.youssefhenna.updates.model.DependantResourceType;
 import com.youssefhenna.updates.model.RunUpdateResult;
 import com.youssefhenna.updates.registry_read.RegistryImageVersionReader;
 import com.youssefhenna.updates.registry_read.RegistryImageVersionReaderImpl;
-import com.youssefhenna.utils.Common;
+import com.youssefhenna.utils.*;
 import com.youssefhenna.utils.Constants;
-import com.youssefhenna.utils.PollUtils;
-import com.youssefhenna.utils.StatusUtils;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.StatefulSet;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.javaoperatorsdk.operator.api.reconciler.*;
 import io.javaoperatorsdk.operator.api.reconciler.dependent.Dependent;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import jakarta.inject.Inject;
 
 import java.time.Duration;
 import java.util.Date;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 @Workflow(
@@ -56,48 +59,75 @@ import java.util.Set;
 @ControllerConfiguration()
 public class SconeOsvScannerReconciler implements Reconciler<SconeOsvScanner> {
 
+    private final MeterRegistry meterRegistry;
+    private final Counter reconcileCounter;
+    private final Timer reconcileTimer;
+    private final Map<DependantResourceType, AtomicInteger> dependantStateGauges;
+    private final MetricsUtils.CertExpiryGauges certExpiryGauges;
+
+    @Inject
+    public SconeOsvScannerReconciler(MeterRegistry meterRegistry) {
+        this.meterRegistry = meterRegistry;
+        this.reconcileCounter = MetricsUtils.registerReconcileCounter(meterRegistry);
+        this.reconcileTimer = MetricsUtils.registerReconcileTimer(meterRegistry);
+        this.dependantStateGauges = MetricsUtils.registerDependantStateGauges(meterRegistry);
+        this.certExpiryGauges = MetricsUtils.registerCertExpiryGauges(meterRegistry);
+    }
 
     @Override
     public UpdateControl<SconeOsvScanner> reconcile(SconeOsvScanner resource, Context<SconeOsvScanner> context) {
-        KubernetesClient client = context.getClient();
-        SconeOsvScannerStatus status = buildDependantsStatus(resource, context);
+        reconcileCounter.increment();
+        Timer.Sample timerSample = Timer.start(meterRegistry);
+        try {
+            KubernetesClient client = context.getClient();
+            SconeOsvScannerStatus status = buildDependantsStatus(resource, context);
 
-        if (shouldRunAutoUpdate(resource)) {
-            RegistryImageVersionReader imageVersionReader = new RegistryImageVersionReaderImpl(client, resource.getMetadata().getNamespace());
-            Map<DependantResourceType, RunUpdateResult> updateResults = ContainerUpdate.runContainerUpdates(
-                resource,
-                imageVersionReader,
-                // runContainerUpdates is impure and modifies the resource object directly, as such can use 'resource' as is for patch
-                () -> client.resource(resource).patch()
-            );
-            StatusUtils.applyUpdateResultsToStatus(status, updateResults);
-            status.setLastAutoUpdateCheckTime(Common.dateToString(new Date()));
-        }
+            MetricsUtils.updateDependantStateGauges(dependantStateGauges, status);
+            String frontAppHost = Constants.getFrontAppServiceName(resource.getMetadata().getName()) + "." + resource.getMetadata().getNamespace();
 
-        PolicyUpstreamSpec upstream = resource.getSpec().getPolicyUpstream();
-        if (upstream != null) {
-            PolicyUploadStatus previousUploadStatus = resource.getStatus() != null
-                ? resource.getStatus().getPolicyUploadStatus()
-                : null;
+            MetricsUtils.updateCertExpiryGauges(certExpiryGauges, status.getFrontAppStatus().getState(), frontAppHost, Constants.FRONT_APP_PORT);
 
-            PolicyUploadStatus newUploadStatus = previousUploadStatus;
-            if (shouldRunPolicySync(previousUploadStatus, upstream)) {
-                PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(
-                    upstream,
-                    new HttpCASClient(resource.getSpec().getCasAddress(), resource.getSpec().getCasPort())
+            if (shouldRunAutoUpdate(resource)) {
+                RegistryImageVersionReader imageVersionReader = new RegistryImageVersionReaderImpl(client, resource.getMetadata().getNamespace());
+                Map<DependantResourceType, RunUpdateResult> updateResults = ContainerUpdate.runContainerUpdates(
+                    resource,
+                    imageVersionReader,
+                    // runContainerUpdates is impure and modifies the resource object directly, as such can use 'resource' as is for patch
+                    () -> client.resource(resource).patch()
                 );
-                newUploadStatus = StatusUtils.buildPolicyUploadStatus(upstream, result);
+                MetricsUtils.recordAutoUpdateMetrics(meterRegistry, updateResults);
+                StatusUtils.applyUpdateResultsToStatus(status, updateResults);
+                status.setLastAutoUpdateCheckTime(Common.dateToString(new Date()));
             }
-            status.setPolicyUploadStatus(newUploadStatus);
 
-            // if hashes changed, immediately reconcile so that dependant resource can restart if needed
-            Duration reschedule = newUploadStatus.hashesChanged(previousUploadStatus)
-                ? Duration.ZERO
-                : PollUtils.minDuration(PollUtils.toDuration(upstream.getPoll()), PollUtils.toDuration(resource.getSpec().getAutoUpdatePoll()));
-            return patchStatus(resource, status, reschedule);
+            PolicyUpstreamSpec upstream = resource.getSpec().getPolicyUpstream();
+            if (upstream != null) {
+                PolicyUploadStatus previousUploadStatus = resource.getStatus() != null
+                    ? resource.getStatus().getPolicyUploadStatus()
+                    : null;
+
+                PolicyUploadStatus newUploadStatus = previousUploadStatus;
+                if (shouldRunPolicySync(previousUploadStatus, upstream)) {
+                    PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(
+                        upstream,
+                        new HttpCASClient(resource.getSpec().getCasAddress(), resource.getSpec().getCasPort())
+                    );
+                    MetricsUtils.recordPolicySyncMetric(meterRegistry, result);
+                    newUploadStatus = StatusUtils.buildPolicyUploadStatus(upstream, result);
+                }
+                status.setPolicyUploadStatus(newUploadStatus);
+
+                // if hashes changed, immediately reconcile so that dependant resource can restart if needed
+                Duration reschedule = newUploadStatus.hashesChanged(previousUploadStatus)
+                    ? Duration.ZERO
+                    : PollUtils.minDuration(PollUtils.toDuration(upstream.getPoll()), PollUtils.toDuration(resource.getSpec().getAutoUpdatePoll()));
+                return patchStatus(resource, status, reschedule);
+            }
+
+            return patchStatus(resource, status, PollUtils.toDuration(resource.getSpec().getAutoUpdatePoll()));
+        } finally {
+            timerSample.stop(reconcileTimer);
         }
-
-        return patchStatus(resource, status, PollUtils.toDuration(resource.getSpec().getAutoUpdatePoll()));
     }
 
     private SconeOsvScannerStatus buildDependantsStatus(SconeOsvScanner resource, Context<SconeOsvScanner> context) {
