@@ -20,7 +20,7 @@ public class SconeOsvScannerSpec extends CommonRegistrySpec {
 
     private PolicyUpstreamSpec policyUpstream;
 
-    private PollConfig autoUpdatePoll = new PollConfig(20, PollConfig.Unit.MINUTES);
+    private PollConfig autoUpdatePoll = new PollConfig(10, PollConfig.Unit.MINUTES);
 
     public String getCasAddress() {
         return casAddress;

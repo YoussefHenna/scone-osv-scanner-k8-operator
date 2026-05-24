@@ -10,6 +10,8 @@ import io.javaoperatorsdk.operator.api.reconciler.dependent.DependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.kubernetes.CRUDKubernetesDependentResource;
 import io.javaoperatorsdk.operator.processing.dependent.workflow.Condition;
 
+import io.quarkus.logging.Log;
+
 import java.util.List;
 import java.util.Map;
 
@@ -86,7 +88,12 @@ public abstract class AbstractImageValidatingPolicyDependentResource
         public boolean isMet(DependentResource<NamespacedImageValidatingPolicy, SconeOsvScanner> dr,
                              SconeOsvScanner primary,
                              Context<SconeOsvScanner> context) {
-            return getDependantSpec(primary).getCosignPublicKey() != null;
+            boolean crdAvailable = NamespacedImageValidatingPolicy.isCrdAvailable(context.getClient());
+            boolean cosignKeyPresent = getDependantSpec(primary).getCosignPublicKey() != null;
+            if (cosignKeyPresent && !crdAvailable) {
+                Log.warn("Cosign public key is set but the Kyverno ImageValidatingPolicy CRD (policies.kyverno.io) is not available, image validation will be skipped");
+            }
+            return crdAvailable && cosignKeyPresent;
         }
     }
 }
