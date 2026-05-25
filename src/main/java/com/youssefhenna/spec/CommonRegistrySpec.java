@@ -30,7 +30,7 @@ public class CommonRegistrySpec {
     public CommonRegistrySpec resolveRegistrySpec(CommonRegistrySpec... parents) {
         if (this.registryUrl != null && this.registryCredentials != null) return this;
         for (CommonRegistrySpec parent : parents) {
-            if (parent != null && parent.registryUrl != null && parent.registryCredentials != null) return parent;
+            if (parent != null && parent.registryUrl != null) return parent;
         }
         return null;
     }

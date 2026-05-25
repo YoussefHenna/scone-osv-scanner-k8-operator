@@ -2,6 +2,7 @@ package com.youssefhenna.updates.registry_read;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.youssefhenna.model.RegistryCredentials;
+import com.youssefhenna.updates.model.DockerConfigJson;
 import com.youssefhenna.spec.CommonRegistrySpec;
 import com.youssefhenna.updates.model.TagsListResponse;
 import com.youssefhenna.updates.model.TokenResponse;
@@ -34,8 +35,11 @@ public class RegistryImageVersionReaderImpl implements RegistryImageVersionReade
 
     @Override
     public List<String> getAvailableVersions(CommonRegistrySpec registrySpec, String imageName) throws Exception {
-        String registryUrl = registrySpec.getRegistryUrl().replaceAll("/$", "");
-        String basicCredentials = resolveBasicCredentials(registrySpec.getRegistryCredentials());
+        String rawUrl = registrySpec.getRegistryUrl().replaceAll("/$", "");
+        String registryUrl = rawUrl.contains("://") ? rawUrl : "https://" + rawUrl;
+
+        String registryHost = URI.create(registryUrl).getHost();
+        String basicCredentials = resolveBasicCredentials(registrySpec.getRegistryCredentials(), registryHost);
         String tagsUrl = registryUrl + "/v2/" + imageName + "/tags/list";
 
         HttpResponse<String> response = httpClient.send(
@@ -56,6 +60,9 @@ public class RegistryImageVersionReaderImpl implements RegistryImageVersionReade
                 buildRequest(tagsUrl, authorization),
                 HttpResponse.BodyHandlers.ofString()
             );
+            if (authedResponse.statusCode() != 200) {
+                throw new Exception("Failed to fetch tags for " + imageName + ": HTTP " + authedResponse.statusCode());
+            }
             return parseTags(authedResponse.body());
         }
 
@@ -63,7 +70,7 @@ public class RegistryImageVersionReaderImpl implements RegistryImageVersionReade
 
     }
 
-    private String resolveBasicCredentials(RegistryCredentials credentials) {
+    private String resolveBasicCredentials(RegistryCredentials credentials, String registryHost) {
         if (credentials == null || credentials.getSecretRef() == null) return null;
 
         Map<String, String> data = kubernetesClient.secrets()
@@ -72,17 +79,48 @@ public class RegistryImageVersionReaderImpl implements RegistryImageVersionReade
             .get()
             .getData();
 
-        String username = decodeBase64SecretValue(data.get("username"));
-        String password = decodeBase64SecretValue(data.get("password"));
-        if (username == null || password == null) return null;
+        if (data.containsKey("username") && data.containsKey("password")) {
+            String username = decodeBase64SecretValue(data.get("username"));
+            String password = decodeBase64SecretValue(data.get("password"));
+            if (username == null || password == null) return null;
+            return Base64.getEncoder().encodeToString((username + ":" + password).getBytes());
+        }
 
-        return Base64.getEncoder().encodeToString((username + ":" + password).getBytes());
+        String dockerConfigJson = data.get(".dockerconfigjson");
+        if (dockerConfigJson != null) {
+            return resolveFromDockerConfig(dockerConfigJson, registryHost);
+        }
+
+        return null;
     }
 
     private String decodeBase64SecretValue(String base64Value) {
         if (base64Value == null) return null;
         return new String(Base64.getDecoder().decode(base64Value));
     }
+
+    private String resolveFromDockerConfig(String base64ConfigJson, String registryHost) {
+        try {
+            String configJson = new String(Base64.getDecoder().decode(base64ConfigJson));
+            DockerConfigJson config = jsonMapper.readValue(configJson, DockerConfigJson.class);
+            if (config.getAuths() == null) return null;
+
+            DockerConfigJson.DockerRegistryAuth registryAuth = config.getAuths().get(registryHost);
+            if (registryAuth == null) return null;
+
+            if (registryAuth.getAuth() != null) return registryAuth.getAuth();
+
+            if (registryAuth.getUsername() != null && registryAuth.getPassword() != null) {
+                return Base64.getEncoder().encodeToString((registryAuth.getUsername() + ":" + registryAuth.getPassword()).getBytes());
+            }
+
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+
 
     private String resolveAuthorization(String wwwAuthenticate, String imageName, String basicCredentials) throws Exception {
         if (!wwwAuthenticate.startsWith("Bearer ")) {

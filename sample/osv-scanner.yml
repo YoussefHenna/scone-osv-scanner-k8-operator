@@ -70,11 +70,13 @@ spec:
     dbManager:
       imageName: youssefhenna/sos-dbmanager
       imageVersion: 1.0.0
+      autoUpdate: true
       memory: 12G
       sconeConfigId: osv-scanner-sample2/scone-osv-scan/dbmanager
     frontApp:
       imageName: youssefhenna/sos-osvscan
       imageVersion: 1.0.0
+      autoUpdate: true
       replicas: 1
       memory: 5G
       sconeConfigId: osv-scanner-sample2/scone-osv-scan/osvscan

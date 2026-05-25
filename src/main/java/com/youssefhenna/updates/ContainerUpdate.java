@@ -2,6 +2,7 @@ package com.youssefhenna.updates;
 
 import com.youssefhenna.SconeOsvScanner;
 import com.youssefhenna.spec.CommonDependantSpec;
+import com.youssefhenna.spec.CommonRegistrySpec;
 import com.youssefhenna.spec.SconeOsvScannerSpec;
 import com.youssefhenna.spec.database.DatabaseSpec;
 import com.youssefhenna.spec.database.MariadbSpec;
@@ -37,19 +38,19 @@ public class ContainerUpdate {
         Map<DependantResourceType, RunUpdateResult> results = new HashMap<>();
 
         if (frontAppSpec.isAutoUpdate()) {
-            results.put(DependantResourceType.FRONT_APP, runUpdate(frontAppSpec, imageVersionReader));
+            results.put(DependantResourceType.FRONT_APP, runUpdate(frontAppSpec, imageVersionReader, scannerSpec, spec));
         }
 
         if (dbManagerSpec.isAutoUpdate()) {
-            results.put(DependantResourceType.DB_MANAGER, runUpdate(dbManagerSpec, imageVersionReader));
+            results.put(DependantResourceType.DB_MANAGER, runUpdate(dbManagerSpec, imageVersionReader, scannerSpec, spec));
         }
 
         if (mariadbSpec.isAutoUpdate()) {
-            results.put(DependantResourceType.MARIADB, runUpdate(mariadbSpec, imageVersionReader));
+            results.put(DependantResourceType.MARIADB, runUpdate(mariadbSpec, imageVersionReader, databaseSpec, spec));
         }
 
         if (maxscaleSpec.isAutoUpdate()) {
-            results.put(DependantResourceType.MAXSCALE, runUpdate(maxscaleSpec, imageVersionReader));
+            results.put(DependantResourceType.MAXSCALE, runUpdate(maxscaleSpec, imageVersionReader, databaseSpec, spec));
         }
 
         boolean anyUpdated = results.values().stream().anyMatch(r -> r.getLastUpdateStatus() == UpdateStatus.SUCCESS_UPDATED);
@@ -61,9 +62,10 @@ public class ContainerUpdate {
         return results;
     }
 
-    private static RunUpdateResult runUpdate(CommonDependantSpec dependantSpec, RegistryImageVersionReader imageVersionReader) {
+    private static RunUpdateResult runUpdate(CommonDependantSpec dependantSpec, RegistryImageVersionReader imageVersionReader, CommonRegistrySpec... parentRegistrySpecs) {
         try {
-            List<String> allTags = imageVersionReader.getAvailableVersions(dependantSpec, dependantSpec.getImageName());
+            CommonRegistrySpec registrySpec = dependantSpec.resolveRegistrySpec(parentRegistrySpecs);
+            List<String> allTags = imageVersionReader.getAvailableVersions(registrySpec, dependantSpec.getImageName());
             List<Semver> stableVersions = filterStableSemver(allTags);
             Semver highestVersion = findHighestVersion(stableVersions);
 

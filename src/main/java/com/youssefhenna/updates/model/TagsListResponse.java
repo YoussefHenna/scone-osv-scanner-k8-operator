@@ -1,7 +1,10 @@
 package com.youssefhenna.updates.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.util.List;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class TagsListResponse {
     private String name;
     private List<String> tags;
