@@ -21,6 +21,7 @@ import com.youssefhenna.utils.Constants;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.StatefulSet;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import com.youssefhenna.model.SecretRef;
 import io.javaoperatorsdk.operator.api.reconciler.*;
 import io.javaoperatorsdk.operator.api.reconciler.dependent.Dependent;
 import io.micrometer.core.instrument.Counter;
@@ -108,9 +109,11 @@ public class SconeOsvScannerReconciler implements Reconciler<SconeOsvScanner> {
 
                 PolicyUploadStatus newUploadStatus = previousUploadStatus;
                 if (shouldRunPolicySync(previousUploadStatus, upstream)) {
+                    String gitToken = resolveGitToken(client, resource.getMetadata().getNamespace(), upstream.getGitTokenSecretRef());
                     PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(
                         upstream,
-                        new HttpCASClient(resource.getSpec().getCasAddress(), resource.getSpec().getCasPort())
+                        new HttpCASClient(resource.getSpec().getCasAddress(), resource.getSpec().getCasPort()),
+                        gitToken
                     );
                     MetricsUtils.recordPolicySyncMetric(meterRegistry, result);
                     newUploadStatus = StatusUtils.buildPolicyUploadStatus(upstream, result);
@@ -222,6 +225,14 @@ public class SconeOsvScannerReconciler implements Reconciler<SconeOsvScanner> {
     private boolean shouldRunAutoUpdate(SconeOsvScanner resource) {
         if (resource.getStatus() == null) return true;
         return PollUtils.isPollElapsed(resource.getStatus().getLastAutoUpdateCheckTime(), resource.getSpec().getAutoUpdatePoll());
+    }
+
+    private String resolveGitToken(KubernetesClient client, String namespace, SecretRef secretRef) {
+        if (secretRef == null) return null;
+        var data = client.secrets().inNamespace(namespace).withName(secretRef.getName()).get().getData();
+        String encoded = data.get("token");
+        if (encoded == null) return null;
+        return new String(java.util.Base64.getDecoder().decode(encoded));
     }
 
     private boolean shouldRunPolicySync(PolicyUploadStatus existingStatus, PolicyUpstreamSpec upstream) {

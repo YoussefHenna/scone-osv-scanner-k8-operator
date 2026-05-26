@@ -1,6 +1,7 @@
 package com.youssefhenna.spec.policy;
 
 import com.youssefhenna.model.PollConfig;
+import com.youssefhenna.model.SecretRef;
 import io.fabric8.generator.annotation.Required;
 
 import java.util.ArrayList;
@@ -8,9 +9,10 @@ import java.util.Objects;
 
 public class PolicyUpstreamSpec {
 
-    //TODO: Accept a token (as secret ref) for private repos
     @Required
     private String gitUrl;
+
+    private SecretRef gitTokenSecretRef;
 
     @Required
     private String branch;
@@ -27,6 +29,14 @@ public class PolicyUpstreamSpec {
 
     public void setGitUrl(String gitUrl) {
         this.gitUrl = gitUrl;
+    }
+
+    public SecretRef getGitTokenSecretRef() {
+        return gitTokenSecretRef;
+    }
+
+    public void setGitTokenSecretRef(SecretRef gitTokenSecretRef) {
+        this.gitTokenSecretRef = gitTokenSecretRef;
     }
 
     public String getBranch() {

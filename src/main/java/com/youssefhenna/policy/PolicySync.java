@@ -15,6 +15,7 @@ import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.jspecify.annotations.NonNull;
 
 import java.io.IOException;
@@ -40,9 +41,9 @@ public class PolicySync {
 
     public record SyncPoliciesResult(PolicyUpdateRunStatus overallStatus, ArrayList<PolicyUploadStatusItem> statuses){}
 
-    public static SyncPoliciesResult syncPolicies(PolicyUpstreamSpec upstream, CASClient casClient) {
+    public static SyncPoliciesResult syncPolicies(PolicyUpstreamSpec upstream, CASClient casClient, String gitToken) {
         try {
-            ensureLatestRepoContents(upstream.getGitUrl(), upstream.getBranch());
+            ensureLatestRepoContents(upstream.getGitUrl(), upstream.getBranch(), gitToken);
 
             ArrayList<FileWithSignature> spolFiles = findHighestVersionSPOLS();
             ArrayList<FileWithSignature> gpgKeyAuthorizationFiles = findGpgAuthorizationFiles();
@@ -59,10 +60,16 @@ public class PolicySync {
     }
 
 
-    private static void ensureLatestRepoContents(String gitUrl, String gitBranch) throws IOException, GitAPIException {
+    private static void ensureLatestRepoContents(String gitUrl, String gitBranch, String gitToken) throws IOException, GitAPIException {
+        UsernamePasswordCredentialsProvider credentials = gitToken != null
+            ? new UsernamePasswordCredentialsProvider("", gitToken)
+            : null;
+
         if (lastClonedRepoPath != null && lastClonedRepoPath.toFile().exists() && lastClonedGitUrl.equals(gitUrl) && lastClonedGitBranch.equals(gitBranch)) {
             try (Git git = Git.open(lastClonedRepoPath.toFile())) {
-                git.fetch().setRefSpecs("refs/heads/" + gitBranch + ":refs/remotes/origin/" + gitBranch).call();
+                var fetch = git.fetch().setRefSpecs("refs/heads/" + gitBranch + ":refs/remotes/origin/" + gitBranch);
+                if (credentials != null) fetch.setCredentialsProvider(credentials);
+                fetch.call();
                 git.reset().setMode(ResetCommand.ResetType.HARD).setRef("origin/" + gitBranch).call();
             }
         } else {
@@ -72,6 +79,7 @@ public class PolicySync {
                 .setURI(gitUrl)
                 .setBranch(gitBranch)
                 .setDirectory(clonePath.toFile());
+            if (credentials != null) command.setCredentialsProvider(credentials);
 
             try (Git _git = command.call()) {
                 lastClonedRepoPath = clonePath;

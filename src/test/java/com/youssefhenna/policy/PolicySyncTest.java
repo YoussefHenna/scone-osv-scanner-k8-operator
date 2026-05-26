@@ -72,7 +72,7 @@ class PolicySyncTest {
             signInline(spolSignerKey, buildSpolSignedYaml(spolVersionedFilename, sha256, repoDir.toAbsolutePath().toString())));
         commitAll("add policies");
 
-        PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(buildUpstream(), casClient);
+        PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(buildUpstream(), casClient, null);
 
         assertEquals(PolicyUpdateRunStatus.SUCCESSFUL, result.overallStatus());
         assertEquals(1, casClient.uploaded.size());
@@ -90,7 +90,7 @@ class PolicySyncTest {
             signInline(spolSignerKey, buildSpolSignedYaml(spolVersionedFilename, sha256(spolJson), repoDir.toAbsolutePath().toString())));
         commitAll("add spol without auth");
 
-        PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(buildUpstream(), casClient);
+        PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(buildUpstream(), casClient, null);
 
         assertEquals(PolicyUpdateRunStatus.SUCCESSFUL, result.overallStatus());
         assertEquals(0, casClient.uploaded.size());
@@ -108,7 +108,7 @@ class PolicySyncTest {
             signInline(spolSignerKey, buildSpolSignedYaml(spolVersionedFilename, sha256(spolJson), repoDir.toAbsolutePath().toString())));
         commitAll("add expired auth + spol");
 
-        PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(buildUpstream(), casClient);
+        PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(buildUpstream(), casClient, null);
 
         assertEquals(PolicyUpdateRunStatus.SUCCESSFUL, result.overallStatus());
         assertEquals(0, casClient.uploaded.size());
@@ -126,7 +126,7 @@ class PolicySyncTest {
             signInline(spolSignerKey, buildSpolSignedYaml(spolVersionedFilename, sha256(spolJson), repoDir.toAbsolutePath().toString())));
         commitAll("add wrong-repo auth");
 
-        PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(buildUpstream(), casClient);
+        PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(buildUpstream(), casClient, null);
 
         assertEquals(PolicyUpdateRunStatus.SUCCESSFUL, result.overallStatus());
         assertEquals(0, casClient.uploaded.size());
@@ -145,7 +145,7 @@ class PolicySyncTest {
             signInline(spolSignerKey, buildSpolSignedYaml(spolVersionedFilename, sha256(spolJson), repoDir.toAbsolutePath().toString())));
         commitAll("untrusted auth signer");
 
-        PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(buildUpstream(), casClient);
+        PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(buildUpstream(), casClient, null);
 
         assertEquals(PolicyUpdateRunStatus.SUCCESSFUL, result.overallStatus());
         assertEquals(0, casClient.uploaded.size());
@@ -163,7 +163,7 @@ class PolicySyncTest {
             signInline(spolSignerKey, buildSpolSignedYaml(spolVersionedFilename, sha256(spolJson), "https://wrong-repo.com/policies.git")));
         commitAll("spol wrong repo");
 
-        PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(buildUpstream(), casClient);
+        PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(buildUpstream(), casClient, null);
 
         assertEquals(PolicyUpdateRunStatus.SUCCESSFUL, result.overallStatus());
         assertEquals(0, casClient.uploaded.size());
@@ -181,7 +181,7 @@ class PolicySyncTest {
             signInline(spolSignerKey, buildSpolSignedYaml(spolVersionedFilename, wrongHash, repoDir.toAbsolutePath().toString())));
         commitAll("spol wrong hash");
 
-        PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(buildUpstream(), casClient);
+        PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(buildUpstream(), casClient, null);
 
         assertEquals(PolicyUpdateRunStatus.SUCCESSFUL, result.overallStatus());
         assertEquals(0, casClient.uploaded.size());
@@ -198,7 +198,7 @@ class PolicySyncTest {
             signInline(spolSignerKey, buildSpolSignedYaml("0-other-name.json", sha256(spolJson), repoDir.toAbsolutePath().toString())));
         commitAll("spol filename mismatch");
 
-        PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(buildUpstream(), casClient);
+        PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(buildUpstream(), casClient, null);
 
         assertEquals(PolicyUpdateRunStatus.SUCCESSFUL, result.overallStatus());
         assertEquals(0, casClient.uploaded.size());
@@ -211,7 +211,7 @@ class PolicySyncTest {
         Files.write(repoDir.resolve("0-osv-policy.json"), buildSpolJson("test-session"));
         commitAll("spol without signature");
 
-        PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(buildUpstream(), casClient);
+        PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(buildUpstream(), casClient, null);
 
         assertEquals(PolicyUpdateRunStatus.SUCCESSFUL, result.overallStatus());
         assertEquals(0, casClient.uploaded.size());
@@ -241,7 +241,7 @@ class PolicySyncTest {
 
         commitAll("multiple spol versions");
 
-        PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(buildUpstream(), casClient);
+        PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(buildUpstream(), casClient, null);
 
         assertEquals(PolicyUpdateRunStatus.SUCCESSFUL, result.overallStatus());
         assertEquals(1, casClient.uploaded.size());
