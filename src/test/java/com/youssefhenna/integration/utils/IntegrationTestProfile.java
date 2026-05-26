@@ -1,4 +1,4 @@
-package com.youssefhenna.integration;
+package com.youssefhenna.integration.utils;
 
 import io.quarkus.test.junit.QuarkusTestProfile;
 

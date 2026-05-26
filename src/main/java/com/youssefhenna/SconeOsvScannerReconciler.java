@@ -6,7 +6,7 @@ import com.youssefhenna.dependent.FrontAppServiceDependentResource;
 import com.youssefhenna.dependent.database.*;
 import com.youssefhenna.dependent.kyverno.*;
 import com.youssefhenna.policy.PolicySync;
-import com.youssefhenna.policy.cas.HttpCASClient;
+import com.youssefhenna.policy.cas.CASClientFactory;
 import com.youssefhenna.spec.SconeOsvScannerSpec;
 import com.youssefhenna.spec.policy.PolicyUpstreamSpec;
 import com.youssefhenna.status.PolicyUploadStatus;
@@ -15,7 +15,7 @@ import com.youssefhenna.updates.ContainerUpdate;
 import com.youssefhenna.updates.model.DependantResourceType;
 import com.youssefhenna.updates.model.RunUpdateResult;
 import com.youssefhenna.updates.registry_read.RegistryImageVersionReader;
-import com.youssefhenna.updates.registry_read.RegistryImageVersionReaderImpl;
+import com.youssefhenna.updates.registry_read.RegistryImageVersionReaderFactory;
 import com.youssefhenna.utils.*;
 import com.youssefhenna.utils.Constants;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
@@ -65,10 +65,14 @@ public class SconeOsvScannerReconciler implements Reconciler<SconeOsvScanner> {
     private final Timer reconcileTimer;
     private final Map<DependantResourceType, AtomicInteger> dependantStateGauges;
     private final MetricsUtils.CertExpiryGauges certExpiryGauges;
+    private final RegistryImageVersionReaderFactory readerFactory;
+    private final CASClientFactory casClientFactory;
 
     @Inject
-    public SconeOsvScannerReconciler(MeterRegistry meterRegistry) {
+    public SconeOsvScannerReconciler(MeterRegistry meterRegistry, RegistryImageVersionReaderFactory readerFactory, CASClientFactory casClientFactory) {
         this.meterRegistry = meterRegistry;
+        this.readerFactory = readerFactory;
+        this.casClientFactory = casClientFactory;
         this.reconcileCounter = MetricsUtils.registerReconcileCounter(meterRegistry);
         this.reconcileTimer = MetricsUtils.registerReconcileTimer(meterRegistry);
         this.dependantStateGauges = MetricsUtils.registerDependantStateGauges(meterRegistry);
@@ -89,7 +93,7 @@ public class SconeOsvScannerReconciler implements Reconciler<SconeOsvScanner> {
             MetricsUtils.updateCertExpiryGauges(certExpiryGauges, status.getFrontAppStatus().getState(), frontAppHost, Constants.FRONT_APP_PORT);
 
             if (shouldRunAutoUpdate(resource)) {
-                RegistryImageVersionReader imageVersionReader = new RegistryImageVersionReaderImpl(client, resource.getMetadata().getNamespace());
+                RegistryImageVersionReader imageVersionReader = readerFactory.create(client, resource.getMetadata().getNamespace());
                 Map<DependantResourceType, RunUpdateResult> updateResults = ContainerUpdate.runContainerUpdates(
                     resource,
                     imageVersionReader,
@@ -112,7 +116,7 @@ public class SconeOsvScannerReconciler implements Reconciler<SconeOsvScanner> {
                     String gitToken = resolveGitToken(client, resource.getMetadata().getNamespace(), upstream.getGitTokenSecretRef());
                     PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(
                         upstream,
-                        new HttpCASClient(resource.getSpec().getCasAddress(), resource.getSpec().getCasPort()),
+                        casClientFactory.create(resource.getSpec().getCasAddress(), resource.getSpec().getCasPort()),
                         gitToken
                     );
                     MetricsUtils.recordPolicySyncMetric(meterRegistry, result);

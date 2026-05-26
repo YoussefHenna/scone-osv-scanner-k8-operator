@@ -1,5 +1,6 @@
 package com.youssefhenna.integration;
 
+import com.youssefhenna.integration.utils.IntegrationTestProfile;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -16,6 +17,7 @@ class ClusterAccessTest {
     @Inject
     KubernetesClient client;
 
+    // smoke test to make sure test cluster is setup properly
     @Test
     void clusterIsReachable() {
         var namespaceList = client.namespaces().list();
