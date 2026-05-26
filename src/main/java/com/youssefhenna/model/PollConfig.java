@@ -35,7 +35,8 @@ public class PollConfig {
     public enum Unit {
         DAYS,
         HOURS,
-        MINUTES
+        MINUTES,
+        SECONDS
     }
 
 }

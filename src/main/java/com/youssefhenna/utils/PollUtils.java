@@ -13,6 +13,7 @@ public class PollUtils {
             case DAYS -> Duration.ofDays(poll.getEvery());
             case HOURS -> Duration.ofHours(poll.getEvery());
             case MINUTES -> Duration.ofMinutes(poll.getEvery());
+            case SECONDS -> Duration.ofSeconds(poll.getEvery());
         };
     }
 
