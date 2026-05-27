@@ -49,7 +49,8 @@ WATCH_NAMESPACE=<NAMESPACE> ./mvnw quarkus:dev
 ```
 
 ### Building & Deploying
-TODO
+
+Releases are published automatically via the [Release workflow](.github/workflows/release.yml) when a GitHub release is created. See [here](./docs/running.md) for install instructions.
 
 ### Related Guides
 
