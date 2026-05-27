@@ -1,5 +1,5 @@
 ## SCONE Policies
-The policies in the [sample](./sample/policies) are setup for the full flow and should be used as a starting point. You should update to another namespace, but the core of the polices should mostly stay the same to guarantee correct behavior.
+The policies in the [sample](../sample/policies) are setup for the full flow and should be used as a starting point. You should update to another namespace, but the core of the polices should mostly stay the same to guarantee correct behavior.
 
 
 ### Policy Upstream (recommended)
