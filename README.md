@@ -1,16 +1,40 @@
-# scone-osv-scanner-k8-operator
-A Kubernetes operator for running [scone-osv-scan](https://github.com/scontain-gmbh/scone-osv-scan) confidentially. 
+# SCONE OSV Scanner K8 Operator
+A Kubernetes operator to run a reliable, confidential, and verifiable SCONE vulnerability scanner. Depends on [the scone-osv-scan project](https://github.com/scontain-gmbh/scone-osv-scan) and the [SCONE framework](https://sconedocs.github.io/latest/).  
 
-## WIP
-Work in progress, not yet ready for usage
+### Features
+- **Operates Full Deployment of the SCONE OSV Scanner**
+  - Load balanced version of the scanner
+  - MariaDB primary + replica(s) with Maxscale proxy
+  - Configurable replica counts and resource allowances
+  - Configurable image sources and registries
+- **SCONE Policy Upload**
+  - Configurable to handle signed SCONE policy upload automatically
+  - Restarts dependant services on policy change
+- **Image Updates**
+  - Configurable to auto update to latest image versions of the services
+  - Validates Cosign image signatures before updating
+  - Rolling no-downtime updates
+- **Observability & Metrics**
+  - Provides detailed status on all running services and scheduled tasks
+  - Exposes a Prometheus compatible metrics endpoint
+- **Confidential Verification**
+  -  CA backed certificate for verification service is running confidentially with the correct SCONE policy
 
-# Quarkus
+### Getting Started
+- [Finding & preparing your container images](./docs/find-image.md)
+- [Setting up SCONE policies](./docs/policies.md)
+- [Setting up CA](./docs/ca.md)
+- [Installing and running](./docs/running.md)
+- [Spec definition](./docs/spec.md)
+- [Observability and metrics](./docs/observability.md)
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
 
-If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
 
-## Running the application in dev mode
+## Development
+
+This project uses Quarkus, if you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
+
+### Running the application in dev mode
 
 You can run your application in dev mode that enables live coding using:
 
@@ -18,47 +42,17 @@ You can run your application in dev mode that enables live coding using:
 ./mvnw quarkus:dev
 ```
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
-
-## Packaging and running the application
-
-The application can be packaged using:
+If you have namespace limited access over the cluster you may also run this to have quarkus only watch a specific namespace.
 
 ```shell script
-./mvnw package
+WATCH_NAMESPACE=<NAMESPACE> ./mvnw quarkus:dev
 ```
 
-It produces the `quarkus-run.jar` file in the `target/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `target/quarkus-app/lib/` directory.
+### Building & Deploying
+TODO
 
-The application is now runnable using `java -jar target/quarkus-app/quarkus-run.jar`.
-
-If you want to build an _über-jar_, execute the following command:
-
-```shell script
-./mvnw package -Dquarkus.package.jar.type=uber-jar
-```
-
-The application, packaged as an _über-jar_, is now runnable using `java -jar target/*-runner.jar`.
-
-## Creating a native executable
-
-You can create a native executable using:
-
-```shell script
-./mvnw package -Dnative
-```
-
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using:
-
-```shell script
-./mvnw package -Dnative -Dquarkus.native.container-build=true
-```
-
-You can then execute your native executable with: `./target/scone-osv-scanner-k8-operator-1.0.0-SNAPSHOT-runner`
-
-If you want to learn more about building native executables, please consult <https://quarkus.io/guides/maven-tooling>.
-
-## Related Guides
+### Related Guides
 
 - Operator SDK ([guide](https://docs.quarkiverse.io/quarkus-operator-sdk/dev/index.html)): Quarkus extension for the Java Operator SDK (https://javaoperatorsdk.io)
+
+
