@@ -1,5 +1,6 @@
 package com.youssefhenna.integration.utils;
 
+import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientBuilder;
@@ -19,7 +20,9 @@ public class K3sTestResource implements QuarkusTestResourceLifecycleManager {
 
     private static final DockerImageName K3S_IMAGE = DockerImageName.parse("rancher/k3s:v1.32.2-k3s1");
     private static final String KYVERNO_INSTALL_URL = "https://github.com/kyverno/kyverno/releases/download/v1.16.2/install.yaml";
-    private static final int KYVERNO_WAIT_TIMEOUT_MS = 60_000;
+    private static final String KYVERNO_NAMESPACE = "kyverno";
+    private static final String KYVERNO_ADMISSION_CONTROLLER = "kyverno-admission-controller";
+    private static final int KYVERNO_WAIT_TIMEOUT_MS = 120_000;
     private static final int KYVERNO_POLL_INTERVAL_MS = 2_000;
 
     private K3sContainer k3s;
@@ -50,6 +53,7 @@ public class K3sTestResource implements QuarkusTestResourceLifecycleManager {
              InputStream manifest = new URL(KYVERNO_INSTALL_URL).openStream()) {
             tempClient.load(manifest).serverSideApply();
             waitForKyvernoCrd(tempClient);
+            waitForKyvernoAdmissionController(tempClient);
         } catch (IOException e) {
             throw new RuntimeException("Failed to install Kyverno", e);
         }
@@ -68,6 +72,32 @@ public class K3sTestResource implements QuarkusTestResourceLifecycleManager {
                 throw new RuntimeException("Interrupted waiting for Kyverno CRD", e);
             }
         }
+    }
+
+    private void waitForKyvernoAdmissionController(KubernetesClient client) {
+        long deadline = System.currentTimeMillis() + KYVERNO_WAIT_TIMEOUT_MS;
+        while (!isKyvernoAdmissionControllerReady(client)) {
+            if (System.currentTimeMillis() > deadline) {
+                throw new RuntimeException("Timed out waiting for Kyverno admission controller to be ready");
+            }
+            try {
+                Thread.sleep(KYVERNO_POLL_INTERVAL_MS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Interrupted waiting for Kyverno admission controller", e);
+            }
+        }
+    }
+
+    private boolean isKyvernoAdmissionControllerReady(KubernetesClient client) {
+        Deployment deployment = client.apps().deployments()
+            .inNamespace(KYVERNO_NAMESPACE)
+            .withName(KYVERNO_ADMISSION_CONTROLLER)
+            .get();
+        if (deployment == null || deployment.getStatus() == null) return false;
+        Integer desired = deployment.getSpec().getReplicas();
+        Integer available = deployment.getStatus().getAvailableReplicas();
+        return desired != null && desired > 0 && desired.equals(available);
     }
 
     private boolean isKyvernoCrdAvailable(KubernetesClient client) {
