@@ -9,7 +9,7 @@ import io.fabric8.kubernetes.model.annotation.Version;
 import java.util.Map;
 
 @Group("policies.kyverno.io")
-@Version("v1beta1")
+@Version("v1")
 public class NamespacedImageValidatingPolicy extends CustomResource<Map<String, Object>, Void> implements Namespaced {
 
     public static boolean isCrdAvailable(KubernetesClient client) {

@@ -18,7 +18,7 @@ import java.util.Map;
 public class K3sTestResource implements QuarkusTestResourceLifecycleManager {
 
     private static final DockerImageName K3S_IMAGE = DockerImageName.parse("rancher/k3s:v1.32.2-k3s1");
-    private static final String KYVERNO_INSTALL_URL = "https://github.com/kyverno/kyverno/releases/download/v1.16.2/install.yaml";
+    private static final String KYVERNO_INSTALL_URL = "https://github.com/kyverno/kyverno/releases/download/v1.18.1/install.yaml";
 
     private K3sContainer k3s;
     private Path kubeconfigFile;
