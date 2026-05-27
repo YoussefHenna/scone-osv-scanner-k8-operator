@@ -21,7 +21,7 @@ Contact the SCONE team for access. SCONE also offers other mariadb images that m
 https://gitlab.scontain.com/scone.cloud/mariadb-11-alpine/container_registry
 
 #### Maxscale
-Contact the SCONE team for access. SCONE also offers other mariadb images that may be used as well
+Contact the SCONE team for access. SCONE also offers other maxscale images that may be used as well
 https://gitlab.scontain.com/scone.cloud/mariadb-11-alpine/container_registry
 
 #### Setting the Images
