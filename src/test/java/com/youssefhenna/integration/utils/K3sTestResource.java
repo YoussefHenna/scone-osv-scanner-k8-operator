@@ -19,6 +19,8 @@ public class K3sTestResource implements QuarkusTestResourceLifecycleManager {
 
     private static final DockerImageName K3S_IMAGE = DockerImageName.parse("rancher/k3s:v1.32.2-k3s1");
     private static final String KYVERNO_INSTALL_URL = "https://github.com/kyverno/kyverno/releases/download/v1.16.2/install.yaml";
+    private static final int KYVERNO_WAIT_TIMEOUT_MS = 60_000;
+    private static final int KYVERNO_POLL_INTERVAL_MS = 2_000;
 
     private K3sContainer k3s;
     private Path kubeconfigFile;
@@ -47,9 +49,30 @@ public class K3sTestResource implements QuarkusTestResourceLifecycleManager {
         try (KubernetesClient tempClient = new KubernetesClientBuilder().withConfig(config).build();
              InputStream manifest = new URL(KYVERNO_INSTALL_URL).openStream()) {
             tempClient.load(manifest).serverSideApply();
+            waitForKyvernoCrd(tempClient);
         } catch (IOException e) {
             throw new RuntimeException("Failed to install Kyverno", e);
         }
+    }
+
+    private void waitForKyvernoCrd(KubernetesClient client) {
+        long deadline = System.currentTimeMillis() + KYVERNO_WAIT_TIMEOUT_MS;
+        while (!isKyvernoCrdAvailable(client)) {
+            if (System.currentTimeMillis() > deadline) {
+                throw new RuntimeException("Timed out waiting for Kyverno CRD (policies.kyverno.io)");
+            }
+            try {
+                Thread.sleep(KYVERNO_POLL_INTERVAL_MS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Interrupted waiting for Kyverno CRD", e);
+            }
+        }
+    }
+
+    private boolean isKyvernoCrdAvailable(KubernetesClient client) {
+        return client.getApiGroups().getGroups().stream()
+            .anyMatch(g -> "policies.kyverno.io".equals(g.getName()));
     }
 
     @Override
