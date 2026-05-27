@@ -38,8 +38,9 @@ public class K3sTestResource implements QuarkusTestResourceLifecycleManager {
 
         installKyverno(kubeConfigYaml);
 
-        System.setProperty("kubeconfig", kubeconfigFile.toAbsolutePath().toString());
-        return Map.of();
+        String kubeconfigPath = kubeconfigFile.toAbsolutePath().toString();
+        System.setProperty("kubeconfig", kubeconfigPath);
+        return Map.of("quarkus.kubernetes-client.kubeconfig", kubeconfigPath);
     }
 
     private void installKyverno(String kubeConfigYaml) {

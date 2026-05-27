@@ -11,7 +11,9 @@ public class IntegrationTestProfile implements QuarkusTestProfile {
     public Map<String, String> getConfigOverrides() {
         return Map.of(
             "quarkus.operator-sdk.start-operator", "true",
-            "quarkus.operator-sdk.crd.apply", "true"
+            "quarkus.operator-sdk.crd.apply", "true",
+            // prevent quarkus from starting its own testing cluster, already setup through k3 test resource
+            "quarkus.kubernetes-client.devservices.enabled", "false"
         );
     }
 
