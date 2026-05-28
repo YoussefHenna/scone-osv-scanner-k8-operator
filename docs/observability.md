@@ -66,7 +66,12 @@ Shared structure used by all five component status fields above.
 
 ### Prometheus Metrics
 
-The operator exposes metrics via the standard Micrometer/Quarkus endpoint (`/q/metrics`).
+The operator exposes metrics via the endpoint at `/q/metrics`
+
+The Helm chart creates a `ClusterIP` Service named `scone-osv-scanner-k8-operator` on port `8080`. The service is annotated with standard Prometheus scrape annotations (`prometheus.io/scrape`, `prometheus.io/path`, `prometheus.io/scheme`), which annotation-based scrapers pick up automatically.
+
+If you use the Prometheus Operator, create a `ServiceMonitor` pointing at the service.
+
 
 #### Counters
 
