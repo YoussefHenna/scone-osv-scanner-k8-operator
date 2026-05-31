@@ -21,29 +21,44 @@ public class MetricsUtils {
     public record CertExpiryGauges(AtomicLong expirySeconds, AtomicInteger warningFlag) {
     }
 
+    public record ResourceMetrics(
+        Counter reconcileCounter,
+        Timer reconcileTimer,
+        Map<DependantResourceType, AtomicInteger> dependantStateGauges,
+        CertExpiryGauges certExpiryGauges
+    ) {
+    }
+
     private static final Map<DependantState, Integer> DEPENDANT_STATE_VALUE = Map.of(
         DependantState.RUNNING, 1,
         DependantState.STARTING, 0,
         DependantState.FAILING, -1
     );
 
-    public static Counter registerReconcileCounter(MeterRegistry registry) {
-        return Counter.builder("operator.reconcile.count")
-            .description("Total number of reconcile calls")
-            .register(registry);
+    public static ResourceMetrics createResourceMetrics(MeterRegistry registry, String name, String namespace) {
+        return new ResourceMetrics(
+            Counter.builder("operator.reconcile.count")
+                .tag("name", name)
+                .tag("namespace", namespace)
+                .description("Total number of reconcile calls")
+                .register(registry),
+            Timer.builder("operator.reconcile.duration")
+                .tag("name", name)
+                .tag("namespace", namespace)
+                .description("Duration of each reconcile call")
+                .register(registry),
+            registerDependantStateGauges(registry, name, namespace),
+            registerCertExpiryGauges(registry, name, namespace)
+        );
     }
 
-    public static Timer registerReconcileTimer(MeterRegistry registry) {
-        return Timer.builder("operator.reconcile.duration")
-            .description("Duration of each reconcile call")
-            .register(registry);
-    }
-
-    public static Map<DependantResourceType, AtomicInteger> registerDependantStateGauges(MeterRegistry registry) {
+    private static Map<DependantResourceType, AtomicInteger> registerDependantStateGauges(MeterRegistry registry, String name, String namespace) {
         Map<DependantResourceType, AtomicInteger> states = new EnumMap<>(DependantResourceType.class);
         for (DependantResourceType type : DependantResourceType.values()) {
             AtomicInteger value = new AtomicInteger(0);
             Gauge.builder("operator.dependant.state", value, AtomicInteger::get)
+                .tag("name", name)
+                .tag("namespace", namespace)
                 .tag("dependant", type.name())
                 .description("State of dependant: 1=RUNNING, 0=STARTING, -1=FAILING")
                 .register(registry);
@@ -52,14 +67,17 @@ public class MetricsUtils {
         return states;
     }
 
-
-    public static CertExpiryGauges registerCertExpiryGauges(MeterRegistry registry) {
+    private static CertExpiryGauges registerCertExpiryGauges(MeterRegistry registry, String name, String namespace) {
         AtomicLong expirySeconds = new AtomicLong(-1);
         AtomicInteger warningFlag = new AtomicInteger(-1);
         Gauge.builder("osv.cert.expiry.seconds", expirySeconds, AtomicLong::get)
+            .tag("name", name)
+            .tag("namespace", namespace)
             .description("Seconds until the front app TLS certificate expires, -1 if service unavailable")
             .register(registry);
         Gauge.builder("osv.cert.expiry.warning", warningFlag, AtomicInteger::get)
+            .tag("name", name)
+            .tag("namespace", namespace)
             .description("1 if within the final 1/3 of certificate validity, 0 if not, -1 if service unavailable")
             .register(registry);
         return new CertExpiryGauges(expirySeconds, warningFlag);
@@ -109,17 +127,21 @@ public class MetricsUtils {
         }
     }
 
-    public static void recordAutoUpdateMetrics(MeterRegistry registry, Map<DependantResourceType, RunUpdateResult> results) {
+    public static void recordAutoUpdateMetrics(MeterRegistry registry, String name, String namespace, Map<DependantResourceType, RunUpdateResult> results) {
         results.forEach((type, result) ->
             registry.counter("operator.autoupdate.run",
+                "name", name,
+                "namespace", namespace,
                 "resource", type.name(),
                 "status", result.getLastUpdateStatus().name()
             ).increment()
         );
     }
 
-    public static void recordPolicySyncMetric(MeterRegistry registry, PolicySync.SyncPoliciesResult result) {
+    public static void recordPolicySyncMetric(MeterRegistry registry, String name, String namespace, PolicySync.SyncPoliciesResult result) {
         registry.counter("operator.policy_sync.run",
+            "name", name,
+            "namespace", namespace,
             "status", result.overallStatus().name()
         ).increment();
     }

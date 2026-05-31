@@ -24,7 +24,6 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import com.youssefhenna.model.SecretRef;
 import io.javaoperatorsdk.operator.api.reconciler.*;
 import io.javaoperatorsdk.operator.api.reconciler.dependent.Dependent;
-import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import jakarta.inject.Inject;
@@ -33,7 +32,7 @@ import java.time.Duration;
 import java.util.Date;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 @Workflow(
@@ -61,10 +60,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SconeOsvScannerReconciler implements Reconciler<SconeOsvScanner> {
 
     private final MeterRegistry meterRegistry;
-    private final Counter reconcileCounter;
-    private final Timer reconcileTimer;
-    private final Map<DependantResourceType, AtomicInteger> dependantStateGauges;
-    private final MetricsUtils.CertExpiryGauges certExpiryGauges;
+    private final Map<String, MetricsUtils.ResourceMetrics> resourceMetricsCache = new ConcurrentHashMap<>();
     private final RegistryImageVersionReaderFactory readerFactory;
     private final CASClientFactory casClientFactory;
 
@@ -73,34 +69,37 @@ public class SconeOsvScannerReconciler implements Reconciler<SconeOsvScanner> {
         this.meterRegistry = meterRegistry;
         this.readerFactory = readerFactory;
         this.casClientFactory = casClientFactory;
-        this.reconcileCounter = MetricsUtils.registerReconcileCounter(meterRegistry);
-        this.reconcileTimer = MetricsUtils.registerReconcileTimer(meterRegistry);
-        this.dependantStateGauges = MetricsUtils.registerDependantStateGauges(meterRegistry);
-        this.certExpiryGauges = MetricsUtils.registerCertExpiryGauges(meterRegistry);
     }
 
     @Override
     public UpdateControl<SconeOsvScanner> reconcile(SconeOsvScanner resource, Context<SconeOsvScanner> context) {
-        reconcileCounter.increment();
+        String name = resource.getMetadata().getName();
+        String namespace = resource.getMetadata().getNamespace();
+        MetricsUtils.ResourceMetrics metrics = resourceMetricsCache.computeIfAbsent(
+            namespace + "/" + name,
+            k -> MetricsUtils.createResourceMetrics(meterRegistry, name, namespace)
+        );
+
+        metrics.reconcileCounter().increment();
         Timer.Sample timerSample = Timer.start(meterRegistry);
         try {
             KubernetesClient client = context.getClient();
             SconeOsvScannerStatus status = buildDependantsStatus(resource, context);
 
-            MetricsUtils.updateDependantStateGauges(dependantStateGauges, status);
-            String frontAppHost = Constants.getFrontAppServiceName(resource.getMetadata().getName()) + "." + resource.getMetadata().getNamespace();
+            MetricsUtils.updateDependantStateGauges(metrics.dependantStateGauges(), status);
+            String frontAppHost = Constants.getFrontAppServiceName(name) + "." + namespace;
 
-            MetricsUtils.updateCertExpiryGauges(certExpiryGauges, status.getFrontAppStatus().getState(), frontAppHost, Constants.FRONT_APP_PORT);
+            MetricsUtils.updateCertExpiryGauges(metrics.certExpiryGauges(), status.getFrontAppStatus().getState(), frontAppHost, Constants.FRONT_APP_PORT);
 
             if (shouldRunAutoUpdate(resource)) {
-                RegistryImageVersionReader imageVersionReader = readerFactory.create(client, resource.getMetadata().getNamespace());
+                RegistryImageVersionReader imageVersionReader = readerFactory.create(client, namespace);
                 Map<DependantResourceType, RunUpdateResult> updateResults = ContainerUpdate.runContainerUpdates(
                     resource,
                     imageVersionReader,
                     // runContainerUpdates is impure and modifies the resource object directly, as such can use 'resource' as is for patch
                     () -> client.resource(resource).patch()
                 );
-                MetricsUtils.recordAutoUpdateMetrics(meterRegistry, updateResults);
+                MetricsUtils.recordAutoUpdateMetrics(meterRegistry, name, namespace, updateResults);
                 StatusUtils.applyUpdateResultsToStatus(status, updateResults);
                 status.setLastAutoUpdateCheckTime(Common.dateToString(new Date()));
             }
@@ -113,13 +112,13 @@ public class SconeOsvScannerReconciler implements Reconciler<SconeOsvScanner> {
 
                 PolicyUploadStatus newUploadStatus = previousUploadStatus;
                 if (shouldRunPolicySync(previousUploadStatus, upstream)) {
-                    String gitToken = resolveGitToken(client, resource.getMetadata().getNamespace(), upstream.getGitTokenSecretRef());
+                    String gitToken = resolveGitToken(client, namespace, upstream.getGitTokenSecretRef());
                     PolicySync.SyncPoliciesResult result = PolicySync.syncPolicies(
                         upstream,
                         casClientFactory.create(resource.getSpec().getCasAddress(), resource.getSpec().getCasPort()),
                         gitToken
                     );
-                    MetricsUtils.recordPolicySyncMetric(meterRegistry, result);
+                    MetricsUtils.recordPolicySyncMetric(meterRegistry, name, namespace, result);
                     newUploadStatus = StatusUtils.buildPolicyUploadStatus(upstream, result);
                 }
                 status.setPolicyUploadStatus(newUploadStatus);
@@ -133,7 +132,7 @@ public class SconeOsvScannerReconciler implements Reconciler<SconeOsvScanner> {
 
             return patchStatus(resource, status, PollUtils.toDuration(resource.getSpec().getAutoUpdatePoll()));
         } finally {
-            timerSample.stop(reconcileTimer);
+            timerSample.stop(metrics.reconcileTimer());
         }
     }
 

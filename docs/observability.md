@@ -73,13 +73,15 @@ The Helm chart creates a `ClusterIP` Service named `scone-osv-scanner-k8-operato
 If you use the Prometheus Operator, create a `ServiceMonitor` pointing at the service.
 
 
+All metrics carry `name` and `namespace` labels identifying the `SconeOsvScanner` CR they belong to, allowing multiple CR instances to be monitored independently.
+
 #### Counters
 
 | Metric | Labels | Description |
 |--------|--------|-------------|
-| `operator_reconcile_count_total` | — | Total number of reconcile loop invocations |
-| `operator_autoupdate_run_total` | `resource`, `status` | Incremented on each auto-update check per component |
-| `operator_policy_sync_run_total` | `status` | Incremented on each policy sync run |
+| `operator_reconcile_count_total` | `name`, `namespace` | Total number of reconcile loop invocations |
+| `operator_autoupdate_run_total` | `name`, `namespace`, `resource`, `status` | Incremented on each auto-update check per component |
+| `operator_policy_sync_run_total` | `name`, `namespace`, `status` | Incremented on each policy sync run |
 
 **`operator_autoupdate_run_total` label values**
 
@@ -95,15 +97,15 @@ If you use the Prometheus Operator, create a `ServiceMonitor` pointing at the se
 
 | Metric | Labels | Description |
 |--------|--------|-------------|
-| `operator_reconcile_duration_seconds` | — | Latency of each reconcile call (exposes `_count`, `_sum`, `_max` in Prometheus format) |
+| `operator_reconcile_duration_seconds` | `name`, `namespace` | Latency of each reconcile call (exposes `_count`, `_sum`, `_max` in Prometheus format) |
 
 #### Gauges
 
 | Metric | Labels | Values | Description |
 |--------|--------|--------|-------------|
-| `operator_dependant_state` | `dependant` | `1`, `0`, `-1` | Component health: `1`=RUNNING, `0`=STARTING, `-1`=FAILING |
-| `osv_cert_expiry_seconds` | — | seconds or `-1` | Seconds until the front app TLS certificate expires; `-1` when the service is unreachable |
-| `osv_cert_expiry_warning` | — | `1`, `0`, `-1` | `1` if within the final ⅓ of certificate validity, `0` if not, `-1` when service is unreachable |
+| `operator_dependant_state` | `name`, `namespace`, `dependant` | `1`, `0`, `-1` | Component health: `1`=RUNNING, `0`=STARTING, `-1`=FAILING |
+| `osv_cert_expiry_seconds` | `name`, `namespace` | seconds or `-1` | Seconds until the front app TLS certificate expires; `-1` when the service is unreachable |
+| `osv_cert_expiry_warning` | `name`, `namespace` | `1`, `0`, `-1` | `1` if within the final ⅓ of certificate validity, `0` if not, `-1` when service is unreachable |
 
 **`operator_dependant_state` label values**
 
