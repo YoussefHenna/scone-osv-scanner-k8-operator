@@ -40,3 +40,11 @@ kubectl apply -f sample/osv-scanner.yml -n <YOUR_NAMESPACE>
 ```
 
 or create your own CR definition. See full list of available fields [here](./spec.md) 
+
+### OSV Scanner Usage
+Check the full usage documentation [here](https://github.com/scontain-gmbh/scone-osv-scan#usage)
+
+For a quick test, you can run the following command
+```shell
+curl -k -F "file=@sample/python3.4-sbom.zip" https://<NODE_IP>:<FRONT_SERVICE_EXPOSED_PORT>/sbom  
+```
