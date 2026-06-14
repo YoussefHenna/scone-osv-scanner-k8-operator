@@ -4,7 +4,7 @@
 ```mermaid
 %%{init: {"flowchart": {"curve": "linear"}}}%%
 flowchart TB
-    devops(["<b>Dev Ops Engineer</b><br/>Deploys and configures the operator"])
+    devops(["<b>System Admin</b><br/>Deploys and configures the operator"])
     prometheus["<b>Prometheus</b><br/>Metrics scraper"]
 
     subgraph system["SCONE OSV Scanner Operator"]

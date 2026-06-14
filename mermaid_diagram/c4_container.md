@@ -4,7 +4,7 @@
 ```mermaid
 %%{init: {"flowchart": {"curve": "linear"}}}%%
 flowchart TB
-    devops(["<b>Dev Ops Engineer</b><br/>Deploys, configures, and manages the operator & CRs"])
+    devops(["<b>System Admin</b><br/>Deploys, configures, and manages the operator & CRs"])
     consumer(["<b>End Consumer</b><br/>Submits SBOMs for vulnerability scanning"])
     cas["<b>SCONE CAS</b><br/>Stores SCONE session policies<br/>and performs SGX enclave attestation"]
     registry["<b>Container Registry</b><br/>Source of container images<br/>for all managed components"]

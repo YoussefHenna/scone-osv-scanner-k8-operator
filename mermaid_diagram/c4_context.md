@@ -3,7 +3,7 @@
 ```mermaid
 %%{init: {"flowchart": {"curve": "linear"}}}%%
 flowchart TB
-    devops(["<b>Dev Ops Engineer</b><br/>Deploys, configures, and manages the operator & CRs"])
+    devops(["<b>System Admin</b><br/>Deploys, configures, and manages the operator & CRs"])
 
     subgraph k8s["Kubernetes Cluster"]
         operator["<b>SCONE OSV Scanner K8 Operator</b><br/>Manages the full lifecycle of the SCONE OSV Scanner stack"]
