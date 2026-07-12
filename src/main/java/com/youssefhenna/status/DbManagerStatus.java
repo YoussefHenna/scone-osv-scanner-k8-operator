@@ -62,6 +62,14 @@ public class DbManagerStatus extends DependantStatus {
         this.currentUpdate = currentUpdate;
     }
 
+    public boolean isUpdateInProgress() {
+        if (currentUpdate == null || currentUpdate.getStatus() == null) {
+            return false;
+        }
+        String phase = currentUpdate.getStatus();
+        return phase.equals("downloading") || phase.equals("processing");
+    }
+
     // Progress of in-progress database update, present only while an update is running.
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class UpdateStatus {
