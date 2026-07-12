@@ -2,7 +2,7 @@ package com.youssefhenna.status;
 
 public class SconeOsvScannerStatus {
 
-    private DependantStatus dbManagerStatus;
+    private DbManagerStatus dbManagerStatus;
     private DependantStatus frontAppStatus;
     private DependantStatus maxscaleStatus;
     private DependantStatus mariadbPrimaryStatus;
@@ -10,11 +10,11 @@ public class SconeOsvScannerStatus {
     private PolicyUploadStatus policyUploadStatus;
     private String lastAutoUpdateCheckTime;
 
-    public DependantStatus getDbManagerStatus() {
+    public DbManagerStatus getDbManagerStatus() {
         return dbManagerStatus;
     }
 
-    public void setDbManagerStatus(DependantStatus dbManagerStatus) {
+    public void setDbManagerStatus(DbManagerStatus dbManagerStatus) {
         this.dbManagerStatus = dbManagerStatus;
     }
 

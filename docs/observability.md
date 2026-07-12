@@ -6,15 +6,15 @@ The operator writes a full status object back to the `SconeOsvScanner` CR on eve
 
 #### Top-level fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `dbManagerStatus` | [`DependantStatus`](#dependantstatus) | Current state of the DB manager deployment |
-| `frontAppStatus` | [`DependantStatus`](#dependantstatus) | Current state of the front app deployment |
-| `maxscaleStatus` | [`DependantStatus`](#dependantstatus) | Current state of the MaxScale deployment |
-| `mariadbPrimaryStatus` | [`DependantStatus`](#dependantstatus) | Current state of the MariaDB primary pod |
-| `mariadbReplicaStatus` | [`DependantStatus`](#dependantstatus) | Current state of the MariaDB replica pod(s) |
-| `policyUploadStatus` | [`PolicyUploadStatus`](#policyuploadstatus) | Last policy sync result (only present when `policyUpstream` is configured) |
-| `lastAutoUpdateCheckTime` | `string` |  timestamp of the most recent auto-update check |
+| Field | Type | Description                                                                                                     |
+|-------|------|-----------------------------------------------------------------------------------------------------------------|
+| `dbManagerStatus` | [`DbManagerStatus`](#dbmanagerstatus) | Current state of the DB manager deployment, along with with status exposed through manager's `/status` endpoint |
+| `frontAppStatus` | [`DependantStatus`](#dependantstatus) | Current state of the front app deployment                                                                       |
+| `maxscaleStatus` | [`DependantStatus`](#dependantstatus) | Current state of the MaxScale deployment                                                                        |
+| `mariadbPrimaryStatus` | [`DependantStatus`](#dependantstatus) | Current state of the MariaDB primary pod                                                                        |
+| `mariadbReplicaStatus` | [`DependantStatus`](#dependantstatus) | Current state of the MariaDB replica pod(s)                                                                     |
+| `policyUploadStatus` | [`PolicyUploadStatus`](#policyuploadstatus) | Last policy sync result (only present when `policyUpstream` is configured)                                      |
+| `lastAutoUpdateCheckTime` | `string` | timestamp of the most recent auto-update check                                                                  |
 
 #### DependantStatus
 
@@ -26,6 +26,73 @@ Shared structure used by all five component status fields above.
 | `currentVersion` | `string` | Image tag currently running |
 | `targetVersion` | `string` | Image tag the operator intends to roll to (set during an update) |
 | `lastUpdateStatus` | `enum` | Result of the last auto-update attempt: `SUCCESS_UPDATED`, `SKIPPED_ALREADY_UPTODATE`, `FAILED_HIGHEST_VERSION_NOT_FOUND`, `FAILED_UNKNOWN_ERROR` |
+
+#### DbManagerStatus
+
+Extends [`DependantStatus`](#dependantstatus) (all fields above apply) with the DB manager's own status, fetched from its internal `/status` endpoint (`http://<db-manager-service>.<namespace>:8080/status`). These extra fields are only populated when the DB manager is `RUNNING` and reachable in-cluster; when the endpoint is unreachable (e.g. running the operator locally) only the inherited `DependantStatus` fields are set.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | `string` | Manager-reported health: `healthy`, `degraded`, `error` |
+| `dbLastUpdate` | `string` | Timestamp of the last successful vulnerability database update |
+| `dbVulnerabilityCount` | `int` | Number of vulnerabilities currently in the database |
+| `cacheSbomCount` | `int` | Number of cached SBOM hash entries |
+| `uptimeSeconds` | `int` | Seconds since the DB manager process started |
+| `currentUpdate` | [`UpdateStatus`](#updatestatus) | Progress of an in-flight database update; omitted when idle |
+
+#### UpdateStatus
+
+Progress of in-progress database update, present only while an update is running.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | `string` | Update phase: `idle`, `downloading`, `processing`, `completed`, `error` |
+| `startTime` | `string` | Timestamp the current update started |
+| `lastUpdateTime` | `string` | Timestamp of the most recent progress update |
+| `currentEcosystem` | `string` | Ecosystem currently being downloaded |
+| `ecosystemProgress` | `string` | Ecosystem download progress, e.g. `3/10` |
+| `processingFiles` | `string` | File processing progress, e.g. `1234/5000` |
+| `progressPercent` | `double` | Overall progress percentage |
+| `message` | `string` | Human-readable status message |
+| `error` | `string` | Error detail when `status` is `error` |
+
+**Example** (`kubectl describe sconeosvscanner`, DB manager running with an update in progress):
+
+```
+Db Manager Status:
+    State:                   RUNNING
+    Current Version:         1.0.0
+    Target Version:          1.0.0
+    Last Update Status:      SKIPPED_ALREADY_UPTODATE
+    Status:                  healthy
+    Db Last Update:          2026-07-12T02:14:33Z
+    Db Vulnerability Count:  284531
+    Cache Sbom Count:        112
+    Uptime Seconds:          86452
+    Current Update:
+      Status:              processing
+      Start Time:          2026-07-12T02:10:01Z
+      Last Update Time:    2026-07-12T02:14:33Z
+      Ecosystem Progress:  8/10
+      Processing Files:    4200/5000
+      Progress Percent:    84
+      Message:             Processing vulnerability files
+```
+
+When idle (no update running) `Current Update` is omitted:
+
+```
+Db Manager Status:
+    State:                   RUNNING
+    Current Version:         1.0.0
+    Target Version:          1.0.0
+    Last Update Status:      SKIPPED_ALREADY_UPTODATE
+    Status:                  healthy
+    Db Last Update:          2026-07-12T02:14:33Z
+    Db Vulnerability Count:  284531
+    Cache Sbom Count:        112
+    Uptime Seconds:          90112
+```
 
 #### PolicyUploadStatus
 

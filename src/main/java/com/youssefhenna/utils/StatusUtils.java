@@ -8,6 +8,7 @@ import com.youssefhenna.updates.model.RunUpdateResult;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.StatefulSet;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.quarkus.logging.Log;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -33,6 +34,30 @@ public class StatusUtils {
         return buildDependantStatus(state, currentVersion, targetVersion, previous);
     }
 
+
+    public static DbManagerStatus buildDbManagerStatus(Deployment deployment, String targetVersion, DbManagerStatus previous, KubernetesClient client, String namespace, String host, int port) {
+        DependantStatus base = buildDeploymentStatus(deployment, targetVersion, previous, client, namespace);
+        DbManagerStatus status = fetchDbManagerSystemStatus(base.getState(), host, port);
+        status.setState(base.getState());
+        status.setCurrentVersion(base.getCurrentVersion());
+        status.setTargetVersion(base.getTargetVersion());
+        status.setLastUpdateStatus(base.getLastUpdateStatus());
+        return status;
+    }
+
+    // Queries the db manager's /status endpoint
+    private static DbManagerStatus fetchDbManagerSystemStatus(DependantState dbManagerState, String host, int port) {
+        if (dbManagerState != DependantState.RUNNING) {
+            return new DbManagerStatus();
+        }
+        try {
+            return DbManagerStatusReader.fetchStatus(host, port);
+        } catch (Exception e) {
+            // Always fails on local dev. Locally running operator cannot access db manager through K8 hostname
+            Log.warn("Failed to fetch db manager status: " + e.getMessage());
+            return new DbManagerStatus();
+        }
+    }
 
     private static DependantStatus buildDependantStatus(DependantState state, String currentVersion, String targetVersion, DependantStatus previous) {
         DependantStatus status = new DependantStatus(state, currentVersion);

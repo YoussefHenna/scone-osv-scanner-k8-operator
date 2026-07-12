@@ -1,6 +1,7 @@
 package com.youssefhenna;
 
 import com.youssefhenna.dependent.DbManagerDeploymentDependentResource;
+import com.youssefhenna.dependent.DbManagerServiceDependentResource;
 import com.youssefhenna.dependent.FrontAppDeploymentDependentResource;
 import com.youssefhenna.dependent.FrontAppServiceDependentResource;
 import com.youssefhenna.dependent.database.*;
@@ -38,6 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Workflow(
     dependents = {
         @Dependent(type = DbManagerDeploymentDependentResource.class, name = Constants.DB_MANAGER_DEPENDENT_NAME),
+        @Dependent(type = DbManagerServiceDependentResource.class, name = Constants.DB_MANAGER_SERVICE_DEPENDENT_NAME),
         @Dependent(type = FrontAppDeploymentDependentResource.class, name = Constants.FRONT_APP_DEPENDENT_NAME),
         @Dependent(type = FrontAppServiceDependentResource.class, name = Constants.FRONT_APP_SERVICE_DEPENDENT_NAME),
         @Dependent(type = MariadbInitScriptsConfigMapDependentResource.class, name = Constants.MARIADB_INIT_SCRIPTS_CONFIGMAP_DEPENDENT_NAME),
@@ -173,12 +175,14 @@ public class SconeOsvScannerReconciler implements Reconciler<SconeOsvScanner> {
 
         SconeOsvScannerStatus status = new SconeOsvScannerStatus();
         status.setDbManagerStatus(
-            StatusUtils.buildDeploymentStatus(
+            StatusUtils.buildDbManagerStatus(
                 dbManager,
                 spec.getScanner().getDbManager().getImageVersion(),
                 previousStatus != null ? previousStatus.getDbManagerStatus() : null,
                 client,
-                namespace
+                namespace,
+                Constants.getDbManagerServiceName(primaryName) + "." + namespace,
+                Constants.DB_MANAGER_PORT
             )
         );
         status.setFrontAppStatus(

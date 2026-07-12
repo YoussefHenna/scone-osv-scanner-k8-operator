@@ -16,8 +16,10 @@ public class Constants {
     public static final String MARIADB_REPLICA_IMAGE_VALIDATING_POLICY_DEPENDENT_NAME = "mariadbReplicaImageValidatingPolicy";
 
     public static final int FRONT_APP_PORT = 8443;
+    public static final int DB_MANAGER_PORT = 8080;
 
     public static final String DB_MANAGER_DEPENDENT_NAME = "dbManager";
+    public static final String DB_MANAGER_SERVICE_DEPENDENT_NAME = "dbManagerService";
     public static final String FRONT_APP_DEPENDENT_NAME = "frontApp";
     public static final String FRONT_APP_SERVICE_DEPENDENT_NAME = "frontAppService";
 
@@ -51,6 +53,10 @@ public class Constants {
 
     public static String getFrontAppDeploymentName(String primaryName) {
         return primaryName + "-front-app";
+    }
+
+    public static String getDbManagerServiceName(String primaryName) {
+        return primaryName + "-db-manager-service";
     }
 
     public static String getFrontAppServiceName(String primaryName) {

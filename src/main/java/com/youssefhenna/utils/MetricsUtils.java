@@ -121,6 +121,7 @@ public class MetricsUtils {
             gauges.expirySeconds().set((notAfterMs - now) / 1000);
             gauges.warningFlag().set(now >= warningThresholdMs ? 1 : 0);
         } catch (Exception e) {
+            // Always fails on local dev. Locally running operator cannot access front app through K8 hostname
             Log.warn("Failed to check front app certificate: " + e.getMessage());
             gauges.expirySeconds().set(-1);
             gauges.warningFlag().set(-1);
