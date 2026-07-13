@@ -93,17 +93,19 @@ public class SconeOsvScannerReconciler implements Reconciler<SconeOsvScanner> {
 
             MetricsUtils.updateCertExpiryGauges(metrics.certExpiryGauges(), status.getFrontAppStatus().getState(), frontAppHost, Constants.FRONT_APP_PORT);
 
+            boolean specUpdated = false;
             if (shouldRunAutoUpdate(resource)) {
                 RegistryImageVersionReader imageVersionReader = readerFactory.create(client, namespace);
                 Map<DependantResourceType, RunUpdateResult> updateResults = ContainerUpdate.runContainerUpdates(
                     resource,
                     imageVersionReader,
                     // runContainerUpdates is impure and modifies the resource object directly, as such can use 'resource' as is for patch
-                    () -> client.resource(resource).patch()
+                    () -> patchSpec(resource, context)
                 );
                 MetricsUtils.recordAutoUpdateMetrics(meterRegistry, name, namespace, updateResults);
                 StatusUtils.applyUpdateResultsToStatus(status, updateResults);
                 status.setLastAutoUpdateCheckTime(Common.dateToString(new Date()));
+                specUpdated = ContainerUpdate.anyUpdated(updateResults);
             }
 
             PolicyUpstreamSpec upstream = resource.getSpec().getPolicyUpstream();
@@ -126,13 +128,17 @@ public class SconeOsvScannerReconciler implements Reconciler<SconeOsvScanner> {
                 status.setPolicyUploadStatus(newUploadStatus);
 
                 // if hashes changed, immediately reconcile so that dependant resource can restart if needed
-                Duration reschedule = newUploadStatus.hashesChanged(previousUploadStatus)
+                boolean reconcileImmediately = specUpdated || newUploadStatus.hashesChanged(previousUploadStatus);
+                Duration reschedule = reconcileImmediately
                     ? Duration.ZERO
                     : PollUtils.minDuration(PollUtils.toDuration(upstream.getPoll()), PollUtils.toDuration(resource.getSpec().getAutoUpdatePoll()));
                 return patchStatus(resource, status, reschedule);
             }
 
-            return patchStatus(resource, status, PollUtils.toDuration(resource.getSpec().getAutoUpdatePoll()));
+            Duration reschedule = specUpdated
+                ? Duration.ZERO
+                : PollUtils.toDuration(resource.getSpec().getAutoUpdatePoll());
+            return patchStatus(resource, status, reschedule);
         } finally {
             timerSample.stop(metrics.reconcileTimer());
         }
@@ -232,6 +238,11 @@ public class SconeOsvScannerReconciler implements Reconciler<SconeOsvScanner> {
     private boolean shouldRunAutoUpdate(SconeOsvScanner resource) {
         if (resource.getStatus() == null) return true;
         return PollUtils.isPollElapsed(resource.getStatus().getLastAutoUpdateCheckTime(), resource.getSpec().getAutoUpdatePoll());
+    }
+
+    private void patchSpec(SconeOsvScanner resource, Context<SconeOsvScanner> context) {
+        SconeOsvScanner patched = context.resourceOperations().jsonMergePatchPrimary(resource);
+        resource.getMetadata().setResourceVersion(patched.getMetadata().getResourceVersion());
     }
 
     private String resolveGitToken(KubernetesClient client, String namespace, SecretRef secretRef) {

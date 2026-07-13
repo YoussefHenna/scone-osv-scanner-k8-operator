@@ -75,7 +75,7 @@ spec:
       sconeConfigId: osv-scanner-sample2/scone-osv-scan/dbmanager
     frontApp:
       imageName: youssefhenna/sos-osvscan
-      imageVersion: 1.0.0
+      imageVersion: 1.0.2
       autoUpdate: true
       replicas: 1
       memory: 5G

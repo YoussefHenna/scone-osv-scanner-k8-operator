@@ -53,13 +53,16 @@ public class ContainerUpdate {
             results.put(DependantResourceType.MAXSCALE, runUpdate(maxscaleSpec, imageVersionReader, databaseSpec, spec));
         }
 
-        boolean anyUpdated = results.values().stream().anyMatch(r -> r.getLastUpdateStatus() == UpdateStatus.SUCCESS_UPDATED);
-        if (anyUpdated) {
-            // spec updated through runUpdate calls, patch resource with changes to trigger reconcile
+        if (anyUpdated(results)) {
+            // spec updated through runUpdate calls, patch resource so dependants pick up the new versions
             patchResource.run();
         }
 
         return results;
+    }
+
+    public static boolean anyUpdated(Map<DependantResourceType, RunUpdateResult> results) {
+        return results.values().stream().anyMatch(r -> r.getLastUpdateStatus() == UpdateStatus.SUCCESS_UPDATED);
     }
 
     private static RunUpdateResult runUpdate(CommonDependantSpec dependantSpec, RegistryImageVersionReader imageVersionReader, CommonRegistrySpec... parentRegistrySpecs) {
