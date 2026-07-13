@@ -1,7 +1,7 @@
 #!/bin/bash
 set -u
 
-# NOTE: 100% CLAUDE Generated
+# NOTE: 100% CLAUDE Generated, code not verified manually, but verified correctness of behavior.
 
 # Polls the SBOM scan endpoint at a fixed interval and records latency/failures
 # as CSV, to evaluate availability during rolling updates.
