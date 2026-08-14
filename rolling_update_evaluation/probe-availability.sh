@@ -8,8 +8,8 @@ set -u
 #
 # usage: ./probe-availability.sh [-u url] [-f sbom_file] [-i interval_seconds] [-o out.csv] [-t timeout_seconds]
 
-URL=${URL:-"https://141.76.44.125:31646/sbom"}
-SBOM_FILE=${SBOM_FILE:-"sample/python3.4-sbom.zip"}
+URL=${URL:-"https://141.76.44.125:30941/sbom"}
+SBOM_FILE=${SBOM_FILE:-"../sample/python3.4-sbom.zip"}
 INTERVAL=${INTERVAL:-2}
 TIMEOUT=${TIMEOUT:-60}
 OUT_FILE=${OUT_FILE:-"probe-availability.csv"}
