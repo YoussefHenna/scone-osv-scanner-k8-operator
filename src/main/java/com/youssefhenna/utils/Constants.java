@@ -18,6 +18,9 @@ public class Constants {
     public static final int FRONT_APP_PORT = 8443;
     public static final int DB_MANAGER_PORT = 8080;
 
+    public static final long FRONT_APP_PRE_STOP_SLEEP_SECONDS = 5;
+    public static final long FRONT_APP_TERMINATION_GRACE_PERIOD_SECONDS = 60;
+
     public static final String DB_MANAGER_DEPENDENT_NAME = "dbManager";
     public static final String DB_MANAGER_SERVICE_DEPENDENT_NAME = "dbManagerService";
     public static final String FRONT_APP_DEPENDENT_NAME = "frontApp";

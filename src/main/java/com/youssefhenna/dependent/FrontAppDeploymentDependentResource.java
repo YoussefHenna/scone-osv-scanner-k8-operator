@@ -65,6 +65,14 @@ public class FrontAppDeploymentDependentResource extends CRUDKubernetesDependent
             .withFailureThreshold(3)
             .build();
 
+        // Keep serving pod temporarily during rolling update
+        // to prevent connection from being dropped
+        Lifecycle lifecycle = new LifecycleBuilder()
+            .withNewPreStop()
+            .withNewSleep(Constants.FRONT_APP_PRE_STOP_SLEEP_SECONDS)
+            .endPreStop()
+            .build();
+
         Container container = new ContainerBuilder()
             .withName(name + "-container")
             .withImage(image)
@@ -74,9 +82,17 @@ public class FrontAppDeploymentDependentResource extends CRUDKubernetesDependent
             .withPorts(new ContainerPortBuilder().withContainerPort(Constants.FRONT_APP_PORT).withName("https").build())
             .withLivenessProbe(livenessProbe)
             .withReadinessProbe(readinessProbe)
+            .withLifecycle(lifecycle)
             .build();
 
-        return Common.buildDeployment(name, namespace, imagePullSecretName, container, spec.getReplicas(), Common.getPolicyHashAnnotation(primary, spec.getSconeConfigId()));
+        Deployment deployment = Common.buildDeployment(name, namespace, imagePullSecretName, container, spec.getReplicas(), Common.getPolicyHashAnnotation(primary, spec.getSconeConfigId()));
+
+
+        // Additional grace period to account for pre stop hook
+        deployment.getSpec().getTemplate().getSpec()
+            .setTerminationGracePeriodSeconds(Constants.FRONT_APP_TERMINATION_GRACE_PERIOD_SECONDS);
+
+        return deployment;
     }
 
 
